@@ -14,6 +14,10 @@ ctx.fillRect = function (x, y, width, height) {
         height: Math.min(Math.max(15, 0.5 * height), 100),
         width: Math.min(Math.max(40, 0.3 * width), 200)
     }
+    if (ctx.fillStyle === window.profitColor || ctx.fillStyle === window.stopColor){
+        console.log(`fillRect x: ${x}, y: ${y}, width: ${width}, height: ${height} color: ${ctx.fillStyle}`);
+    }
+
     if (window.longToolColor && ctx.fillStyle === window.longToolColor.stopColor) {
         console.log(`LongStop x: ${x}, y: ${y}, width: ${width}, height: ${height} color: ${ctx.fillStyle}`);
         window.toolsItem['stopY'] = y;
@@ -42,13 +46,13 @@ ctx.fillRect = function (x, y, width, height) {
         window.toolsItem['profitY'] = null;
         ctx.restore();
     } else if (window.shortToolColor && ctx.fillStyle === window.shortToolColor.stopColor) {
-        console.log(`ShortStop x: ${x}, y: ${y}, width: ${width}, height: ${height} color: ${ctx.fillStyle}`);
+        // console.log(`ShortStop x: ${x}, y: ${y}, width: ${width}, height: ${height} color: ${ctx.fillStyle}`);
         window.toolsItem['stopY'] = y;
 
         // 调用原始的 scale 方法
         originalFillRect.call(this, x, y, width, height);
     } else if (window.shortToolColor && ctx.fillStyle === window.shortToolColor.profitColor && window.toolsItem['stopY']) {
-        console.log(`LongProfit x: ${x}, y: ${y}, width: ${width}, height: ${height} color: ${ctx.fillStyle}`);
+        // console.log(`ShortProfit x: ${x}, y: ${y}, width: ${width}, height: ${height} color: ${ctx.fillStyle}`);
         window.toolsItem['profitY'] = y;
 
         // 调用原始的 scale 方法
@@ -76,3 +80,4 @@ ctx.fillRect = function (x, y, width, height) {
 
 // // 还原 fillRect 方法
 // ctx.fillRect = originalFillRect;
+
