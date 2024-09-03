@@ -1,74 +1,115 @@
-<canvas id="myCanvas" width="800" height="600" style="border:1px solid #000000;"></canvas>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 158 28" width="158" height="28"><path fill="currentColor" d="M127.37 7.21c0 .99-.83 1.78-1.87 1.78-1 0-1.84-.8-1.84-1.78s.85-1.77 1.84-1.77c1.04 0 1.87.8 1.87 1.77ZM127 21h-3V10h3v11ZM81.54 9.02c1.04 0 1.87-.8 1.87-1.77 0-.99-.83-1.78-1.87-1.78-1 0-1.84.8-1.84 1.78s.85 1.77 1.84 1.77ZM80 21h3V10h-3v11ZM43 21h-3V9h-4V6h11v3h-4v12ZM50 21l-3 .02V10h3v1.88c.36-1 1.34-1.75 2.53-1.75h.03c.3 0 .6 0 .94.1v2.84a4 4 0 0 0-1.31-.2c-1.38 0-2.19 1-2.19 2.7V21ZM88 21h-3V10.01l3-.01v1c.57-.82 1.53-1.21 2.9-1.21 2.57 0 4.1 1.8 4.1 4.45V21h-3v-6c0-1.47-.56-2.66-1.77-2.66-1.36 0-2.23.93-2.23 2.89V21ZM117 21l6-15h-3.5l-4 10.5L111 6h-3.5l6.5 15h3ZM153.45 21h-2.93l-2.02-6.25-2 6.25h-2.93L140 10h3.14l2.05 7.04 2.17-7.04h2.26l2.2 7.04 2.02-7.04H157l-3.55 11ZM58.92 21.24c1.52 0 2.57-.77 3.08-1.47V21h3V10h-3v1.23a3.78 3.78 0 0 0-3.08-1.47c-2.93 0-5.17 2.64-5.17 5.74s2.24 5.74 5.17 5.74Zm.64-2.75c-1.68 0-2.78-1.25-2.78-2.99 0-1.74 1.1-3 2.78-3 1.67 0 2.77 1.26 2.77 3s-1.1 3-2.77 3ZM75 19.77c-.5.7-1.56 1.47-3.08 1.47-2.93 0-5.17-2.64-5.17-5.74s2.24-5.74 5.17-5.74c1.52 0 2.57.77 3.08 1.47V6h3v15h-3v-1.23Zm-5.22-4.27c0 1.74 1.1 3 2.78 3 1.67 0 2.77-1.26 2.77-3s-1.1-3-2.77-3c-1.68 0-2.78 1.26-2.78 3ZM102.23 25.82c3.36 0 5.77-1.72 5.77-5.68V10h-3v1.23a3.6 3.6 0 0 0-3.06-1.47c-2.88 0-5.2 2.46-5.2 5.56 0 3.08 2.32 5.68 5.2 5.68a3.8 3.8 0 0 0 3.06-1.58v.74c0 1.76-1.04 3.02-2.82 3.02a4.84 4.84 0 0 1-3.43-1.37l-1.65 2.25c1.25 1.2 3.21 1.76 5.13 1.76Zm.35-7.68a2.75 2.75 0 0 1-2.8-2.82c0-1.69 1.28-2.81 2.8-2.81 1.52 0 2.8 1.12 2.8 2.81a2.75 2.75 0 0 1-2.8 2.82ZM139.78 18.72a5.96 5.96 0 0 1-5.1 2.47c-3.28 0-5.83-2.27-5.83-5.74a5.62 5.62 0 0 1 5.78-5.75c2.89 0 5.42 1.83 5.42 5.42a6.01 6.01 0 0 1-.04 1.13h-8.24c.18 1.47 1.48 2.19 2.93 2.19 1.39 0 2.33-.62 2.84-1.39l2.24 1.67Zm-5.23-6.53c-1.13 0-2.38.57-2.67 1.91h5.15c-.26-1.32-1.36-1.91-2.48-1.91ZM12 6H0v6h6v9h6V6Zm12 15h-7l6-15h7l-6 15Zm-7-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path></svg>
-<script>
-    const canvas = document.getElementById('myCanvas');
-    const ctx = canvas.getContext('2d');
-
-    let offsetX = 0; // X轴偏移量
-    let offsetY = 0; // Y轴偏移量
-    let isDragging = false;
-    let startX, startY;
-    let scale = 1; // 缩放比例
-    const scaleFactor = 1.1; // 每次缩放的比例因子
-
-    // 绘制一些内容
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
-        ctx.save(); // 保存当前状态
-        ctx.translate(offsetX, offsetY); // 根据偏移量移动画布内容
-        ctx.scale(scale, scale); // 缩放画布内容
-        // 这里可以绘制你需要的内容，以下是简单的矩形示例
-        ctx.fillStyle = "red";
-        ctx.fillRect(100, 100, 200, 200);
-        ctx.restore(); // 恢复状态
-    }
-
-    // 初始化绘制
-    draw();
-
-    // 鼠标按下事件
-    canvas.addEventListener('mousedown', function (e) {
-        isDragging = true;
-        startX = e.offsetX - offsetX;
-        startY = e.offsetY - offsetY;
-    });
-
-    // 鼠标移动事件
-    canvas.addEventListener('mousemove', function (e) {
-        if (isDragging) {
-            offsetX = e.offsetX - startX;
-            offsetY = e.offsetY - startY;
-            draw(); // 更新画布
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resizable Rectangle on Canvas</title>
+    <style>
+        canvas {
+            border: 1px solid black;
         }
-    });
+    </style>
+</head>
+<body>
+    <canvas id="myCanvas" width="500" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
 
-    // 鼠标松开事件
-    canvas.addEventListener('mouseup', function (e) {
-        isDragging = false;
-    });
+        // 初始矩形参数
+        let rect = { x: 100, y: 100, width: 200, height: 150 };
+        const cornerSize = 10;
+        let draggingCorner = null;
+        let isDragging = false;
 
-    // 鼠标移出画布事件（防止拖动中断）
-    canvas.addEventListener('mouseout', function (e) {
-        isDragging = false;
-    });
-
-    // 鼠标滚轮事件（缩放）
-    canvas.addEventListener('wheel', function (e) {
-        e.preventDefault(); // 阻止默认的滚动行为
-        const mouseX = e.offsetX - offsetX; // 获取相对于当前偏移的鼠标X坐标
-        const mouseY = e.offsetY - offsetY; // 获取相对于当前偏移的鼠标Y坐标
-
-        // 计算新的缩放比例
-        if (e.deltaY < 0) {
-            scale *= scaleFactor;
-        } else {
-            scale /= scaleFactor;
+        // 绘制背景（覆盖之前的绘图内容）
+        function drawBackground() {
+            ctx.fillStyle = 'white'; // 背景颜色，可以更改为其他颜色或图像
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
-        // 调整偏移量以保持缩放中心在鼠标位置
-        offsetX = e.offsetX - mouseX * scale;
-        offsetY = e.offsetY - mouseY * scale;
+        // 绘制矩形和角点
+        function draw() {
+            drawBackground(); // 先绘制背景，覆盖之前的内容
 
-        draw(); // 更新画布
-    });
-</script>
+            ctx.fillStyle = 'rgba(0, 150, 250, 0.5)';
+            ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+
+            // 画矩形的四个角点，用于缩放
+            ctx.fillStyle = 'rgba(255, 0, 0, 1)';
+            ctx.fillRect(rect.x - cornerSize / 2, rect.y - cornerSize / 2, cornerSize, cornerSize); // 左上
+            ctx.fillRect(rect.x + rect.width - cornerSize / 2, rect.y - cornerSize / 2, cornerSize, cornerSize); // 右上
+            ctx.fillRect(rect.x - cornerSize / 2, rect.y + rect.height - cornerSize / 2, cornerSize, cornerSize); // 左下
+            ctx.fillRect(rect.x + rect.width - cornerSize / 2, rect.y + rect.height - cornerSize / 2, cornerSize, cornerSize); // 右下
+        }
+
+        // 检查鼠标是否在角点上
+        function isMouseInCorner(mouseX, mouseY) {
+            const corners = [
+                { x: rect.x, y: rect.y }, // 左上
+                { x: rect.x + rect.width, y: rect.y }, // 右上
+                { x: rect.x, y: rect.y + rect.height }, // 左下
+                { x: rect.x + rect.width, y: rect.y + rect.height } // 右下
+            ];
+
+            for (let i = 0; i < corners.length; i++) {
+                const corner = corners[i];
+                if (mouseX > corner.x - cornerSize / 2 &&
+                    mouseX < corner.x + cornerSize / 2 &&
+                    mouseY > corner.y - cornerSize / 2 &&
+                    mouseY < corner.y + cornerSize / 2) {
+                    return i; // 返回角点的索引
+                }
+            }
+            return null;
+        }
+
+        // 处理鼠标按下事件
+        canvas.addEventListener('mousedown', (e) => {
+            const mousePos = { x: e.offsetX, y: e.offsetY };
+            draggingCorner = isMouseInCorner(mousePos.x, mousePos.y);
+            if (draggingCorner !== null) {
+                isDragging = true;
+            }
+        });
+
+        // 处理鼠标移动事件
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging && draggingCorner !== null) {
+                const mousePos = { x: e.offsetX, y: e.offsetY };
+                switch (draggingCorner) {
+                    case 0: // 左上角
+                        rect.width += rect.x - mousePos.x;
+                        rect.height += rect.y - mousePos.y;
+                        rect.x = mousePos.x;
+                        rect.y = mousePos.y;
+                        break;
+                    case 1: // 右上角
+                        rect.width = mousePos.x - rect.x;
+                        rect.height += rect.y - mousePos.y;
+                        rect.y = mousePos.y;
+                        break;
+                    case 2: // 左下角
+                        rect.width += rect.x - mousePos.x;
+                        rect.x = mousePos.x;
+                        rect.height = mousePos.y - rect.y;
+                        break;
+                    case 3: // 右下角
+                        rect.width = mousePos.x - rect.x;
+                        rect.height = mousePos.y - rect.y;
+                        break;
+                }
+                draw();
+            }
+        });
+
+        // 处理鼠标释放事件
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+            draggingCorner = null;
+        });
+
+        draw();
+    </script>
+</body>
+</html>
