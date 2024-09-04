@@ -14,6 +14,9 @@ function getDecimalPlaces(num) {
     return numStr.length - decimalIndex - 1;
 }
 
+window.longToolColor = null;
+window.shortToolColor = null;
+
 const originalFetch = window.fetch;
 window.fetch = function (...args) {
     const url = args[0];
@@ -33,14 +36,14 @@ window.fetch = function (...args) {
             let name = sources[key]['state']['type'];
             let side = name.toLowerCase().includes('short') ? 'short' : 'long';
 
-            if (window.longToolColor === undefined && side === 'long') {
+            if (window.longToolColor === null && side === 'long') {
                 window.longToolColor = {};
                 window.longToolColor['profitColor'] = sources[key]['state']['state']['profitBackground'];
                 window.longToolColor['stopColor'] = sources[key]['state']['state']['stopBackground'];
                 window.longToolColor['lineColor'] = sources[key]['state']['state']['linecolor'];
                 window.longToolColor['textColor'] = sources[key]['state']['state']['textcolor'];
             }
-            if (window.shortToolColor === undefined && side === 'short') {
+            if (window.shortToolColor === null && side === 'short') {
                 window.shortToolColor = {};
                 window.shortToolColor['profitColor'] = sources[key]['state']['state']['profitBackground'];
                 window.shortToolColor['stopColor'] = sources[key]['state']['state']['stopBackground'];
@@ -65,6 +68,8 @@ window.fetch = function (...args) {
     return originalFetch.apply(this, arguments);
 };
 // window.fetch = originalFetch;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 选择要观察的节点
 const targetNode = document.getElementsByClassName('toastListInner-Hvz5Irky')[0];
@@ -94,3 +99,6 @@ observer.observe(targetNode, config);
 
 // 你可以在需要时停止观察
 // observer.disconnect();
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
