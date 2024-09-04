@@ -77,6 +77,7 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
     toolAndButtonInfo.buttonX = buttonX;
     toolAndButtonInfo.buttonY = buttonY;
 
+
     // 绘制左半部分（绿色），中间无圆角
     ctx.beginPath();
     ctx.moveTo(buttonX + radius, buttonY);  // 左上角
@@ -89,6 +90,9 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
     ctx.closePath();
     ctx.fillStyle = isLong ? window.longToolColor !== null ? window.longToolColor['profitColor'] : window.shortToolColor !== null ? window.shortToolColor['profitColor'] : '#ffffff' : window.shortToolColor !== null ? window.shortToolColor['profitColor'] : '#ffffff';
     ctx.fillStyle = rgbaToHex(ctx.fillStyle);
+    if(enterButton.opened){
+        ctx.fillStyle = 'rgba(96, 100, 111, 1)';
+    }
     ctx.fill();
     ctx.strokeStyle = isLong ? window.longToolColor !== null ? window.longToolColor['lineColor'] : window.shortToolColor !== null ? window.shortToolColor['lineColor'] : '#000000' : window.shortToolColor !== null ? window.shortToolColor['lineColor'] : '#000000';
     ctx.strokeStyle = rgbaToHex(ctx.strokeStyle);
@@ -105,6 +109,9 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
     ctx.closePath();
     ctx.fillStyle = isLong ? window.longToolColor !== null ? window.longToolColor['stopColor'] : window.shortToolColor !== null ? window.shortToolColor['stopColor'] : '#ffffff' : window.shortToolColor !== null ? window.shortToolColor['stopColor'] : '#ffffff';
     ctx.fillStyle = rgbaToHex(ctx.fillStyle);
+    if(!enterButton.opened){
+        ctx.fillStyle = 'rgba(96, 100, 111, 1)';
+    }
     ctx.fill();
     ctx.stroke();
 
@@ -143,8 +150,12 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
 
 function mouseMoveEvent(event) {
     const rect = this.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
+
+    const scaleX = this.width / rect.width;
+    const scaleY = this.height / rect.height;
+
+    const mouseX = (event.clientX - rect.left) * scaleX;
+    const mouseY = (event.clientY - rect.top) * scaleY;
 
     let cursorInRight = false;
     let cursorInCancle = false;
