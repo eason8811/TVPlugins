@@ -61,10 +61,11 @@ window.fetch = function (...args) {
             let profit_level = sources[key]['state']['state']['profitLevel'];
             let stop = side === 'long' ? enter - stop_level / 10 ** small_point : enter + stop_level / 10 ** small_point;
             let profit = side === 'long' ? enter + profit_level / 10 ** small_point : enter - profit_level / 10 ** small_point;
-            let timeStamp = sources[key]['state']['points'][0]['time_t'];
+            let offset = sources[key]['state']['points'][0]['offset'];
             stop = Math.round(stop * 10 ** small_point) / 10 ** small_point;
             profit = Math.round(profit * 10 ** small_point) / 10 ** small_point;
-            window.buttonList[timeStamp] = {
+            window.buttonList[key] = {
+                offset: offset,
                 enter: enter,
                 stop: stop,
                 profit: profit,
