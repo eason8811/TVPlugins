@@ -49,6 +49,15 @@ function rgbaToHex(rgba) {
     return `#${hex}`;
 }
 
+function getToolItemIndex(x, y) {
+    window.toolItemList = window.toolItemList.sort((a, b) => a.x - b.x);
+    for (let i = 0; i < window.toolItemList.length; i++) {
+        const toolItem = window.toolItemList[i];
+        if (toolItem.x === x && toolItem.y === y)
+            return i
+    }
+}
+
 function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
     // 绘制下单按钮
     enterButton = {
@@ -90,7 +99,14 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
     ctx.closePath();
     ctx.fillStyle = isLong ? window.longToolColor !== null ? window.longToolColor['profitColor'] : window.shortToolColor !== null ? window.shortToolColor['profitColor'] : '#ffffff' : window.shortToolColor !== null ? window.shortToolColor['profitColor'] : '#ffffff';
     ctx.fillStyle = rgbaToHex(ctx.fillStyle);
-    if(enterButton.opened){
+    let buttonIndex = getToolItemIndex(x, y);
+    let buttonListKeys = Object.keys(window.buttonList);
+    for (let i = 0; i < buttonListKeys.length; i++) {
+        buttonListKeys[i] = parseInt(buttonListKeys[i]);
+    }
+    buttonListKeys = buttonListKeys.sort();
+    let buttonColorControl = window.buttonList[buttonListKeys[buttonIndex]] !== undefined && window.buttonList[buttonListKeys[buttonIndex]].opened;
+    if (buttonColorControl) {
         ctx.fillStyle = 'rgba(96, 100, 111, 1)';
     }
     ctx.fill();
@@ -109,7 +125,7 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
     ctx.closePath();
     ctx.fillStyle = isLong ? window.longToolColor !== null ? window.longToolColor['stopColor'] : window.shortToolColor !== null ? window.shortToolColor['stopColor'] : '#ffffff' : window.shortToolColor !== null ? window.shortToolColor['stopColor'] : '#ffffff';
     ctx.fillStyle = rgbaToHex(ctx.fillStyle);
-    if(!enterButton.opened){
+    if (!buttonColorControl) {
         ctx.fillStyle = 'rgba(96, 100, 111, 1)';
     }
     ctx.fill();
@@ -162,7 +178,7 @@ function mouseMoveEvent(event) {
     for (let i = 0; i < window.toolItemList.length; i++) {
         const buttonX = window.toolItemList[i].buttonX;
         const buttonY = window.toolItemList[i].buttonY;
-        console.log(`x: ${mouseX}, y: ${mouseY}, buttonX: ${buttonX}, buttonY: ${buttonY}`);
+        // console.log(`x: ${mouseX}, y: ${mouseY}, buttonX: ${buttonX}, buttonY: ${buttonY}`);
         cursorInRight = cursorInRight || (mouseX > buttonX && mouseX < buttonX + enterButton.width / 2 && mouseY > buttonY && mouseY < buttonY + enterButton.height);
         cursorInCancle = cursorInCancle || (mouseX > buttonX + enterButton.width / 2 && mouseX < buttonX + enterButton.width && mouseY > buttonY && mouseY < buttonY + enterButton.height);
     }
@@ -256,6 +272,10 @@ ctx1.fillRect = function (x, y, width, height) {
 
 // 覆盖 fillRect 方法
 ctx2.fillRect = function (x, y, width, height) {
+    if (x === 0 && y === 0) {
+        // 记录工具列表
+        window.toolItemList = [];
+    }
     // 颜色识别当前为多头工具的止损
     if (window.longToolColor && ctx2.fillStyle === window.longToolColor.stopColor) {
         window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
@@ -272,6 +292,7 @@ ctx2.fillRect = function (x, y, width, height) {
         };
         draw(ctx2, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
         setupEventListeners(canvasNode2);
+        window.toolItemList.push(toolAndButtonInfo);
         // 颜色识别当前为空头工具的止损
     } else if (window.shortToolColor && ctx2.fillStyle === window.shortToolColor.stopColor) {
         window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
@@ -288,6 +309,7 @@ ctx2.fillRect = function (x, y, width, height) {
         };
         draw(ctx2, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
         setupEventListeners(canvasNode2);
+        window.toolItemList.push(toolAndButtonInfo);
     } else {
         originalFillRect1.call(this, x, y, width, height);
     }

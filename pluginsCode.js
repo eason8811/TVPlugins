@@ -16,6 +16,7 @@ function getDecimalPlaces(num) {
 
 window.longToolColor = null;
 window.shortToolColor = null;
+window.buttonList = {};
 
 const originalFetch = window.fetch;
 window.fetch = function (...args) {
@@ -30,8 +31,11 @@ window.fetch = function (...args) {
         let sources = JSON.parse(args[1].body).sources;
         console.log(sources);
         for (let key in sources) {
-            if (sources[key] === null)
+            if (sources[key] === null) {
+                if (window.buttonList[key] !== undefined)
+                    delete window.buttonList[key];
                 continue;
+            }
 
             let name = sources[key]['state']['type'];
             let side = name.toLowerCase().includes('short') ? 'short' : 'long';
@@ -57,8 +61,16 @@ window.fetch = function (...args) {
             let profit_level = sources[key]['state']['state']['profitLevel'];
             let stop = side === 'long' ? enter - stop_level / 10 ** small_point : enter + stop_level / 10 ** small_point;
             let profit = side === 'long' ? enter + profit_level / 10 ** small_point : enter - profit_level / 10 ** small_point;
+            let timeStamp = sources[key]['state']['points'][0]['time_t'];
             stop = Math.round(stop * 10 ** small_point) / 10 ** small_point;
             profit = Math.round(profit * 10 ** small_point) / 10 ** small_point;
+            window.buttonList[timeStamp] = {
+                enter: enter,
+                stop: stop,
+                profit: profit,
+                side: side,
+                opened: false
+            };
             console.log(`组件名称为:${name}\n进场价格为:${enter}\n止损价格为:${stop}\n止盈价格为:${profit}`);
         }
 
