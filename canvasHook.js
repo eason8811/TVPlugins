@@ -9,8 +9,10 @@ const originalFillRect2 = ctx2.fillRect;
 
 window.toolsItem = {
     profitY: null,
-    stopY: null
+    stopY: null,
+    stopHeight: null,
 };
+window.currentToolIndex = -1;
 
 let defaultMaxWidth = 110;
 let defaultMinWidth = 75;
@@ -53,7 +55,7 @@ function getToolItemIndex(x, y) {
     window.toolItemList = window.toolItemList.sort((a, b) => a.x - b.x);
     for (let i = 0; i < window.toolItemList.length; i++) {
         const toolItem = window.toolItemList[i];
-        if (toolItem.x === x && toolItem.y === y)
+        if (toolItem.x === x && toolItem.profitY === y)
             return i
     }
 }
@@ -101,27 +103,32 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
     ctx.fillStyle = rgbaToHex(ctx.fillStyle);
 
     // 将toolItemList排序后，获取当前组件的索引
+    let buttonColorControl;
+    let toolItemIndex = getToolItemIndex(x, y);
+    let sortedButtonList = Object.values(window.buttonList).sort((a, b) => a.timestamp - b.timestamp);
+    let buttonItem = sortedButtonList[toolItemIndex];
     let buttonKey;
-    if (window.toolItemList.length === Object.keys(window.buttonList).length) {
-        let toolItemIndex = getToolItemIndex(x, y);
-        let sortedButtonList = Object.values(window.buttonList).sort((a, b) => a.offset - b.offset);
-        let buttonItem = sortedButtonList[toolItemIndex];
-        for (let key in window.buttonList) {
-            buttonKey = undefined;
-            let currentItem = window.buttonList[key];
-            if (buttonItem === undefined || buttonItem === null)
-                break;
-            if (currentItem.offset === buttonItem.offset && currentItem.enter === buttonItem.enter
-                && currentItem.stop === buttonItem.stop && currentItem.profit === buttonItem.profit
-                && currentItem.side === buttonItem.side) {
-                buttonKey = key;
-                break;
-            }
+    for (let key in window.buttonList) {
+        buttonKey = undefined;
+        let currentItem = window.buttonList[key];
+        if (buttonItem === undefined || buttonItem === null)
+            break;
+        if (currentItem.offset === buttonItem.offset && currentItem.enter === buttonItem.enter
+            && currentItem.stop === buttonItem.stop && currentItem.profit === buttonItem.profit
+            && currentItem.side === buttonItem.side) {
+            buttonKey = key;
+            break;
         }
     }
 
+    if (window.currentToolIndex === -1) {
+        buttonColorControl = sortedButtonList[toolItemIndex].opened;
+    }
+    else {
+        buttonColorControl = buttonKey !== undefined && window.buttonList[buttonKey] !== undefined && window.buttonList[buttonKey] !== null && window.buttonList[buttonKey].opened;
+    }
 
-    let buttonColorControl = buttonKey !== undefined && window.buttonList[buttonKey] !== undefined && window.buttonList[buttonKey] !== null && window.buttonList[buttonKey].opened;
+
     if (buttonColorControl) {
         ctx.fillStyle = 'rgba(96, 100, 111, 1)';
     }
@@ -181,6 +188,7 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
 }
 
 function mouseMoveEvent(event) {
+    // window.currentToolIndex = -1;
     const rect = this.getBoundingClientRect();
 
     const scaleX = this.width / rect.width;
@@ -191,13 +199,36 @@ function mouseMoveEvent(event) {
 
     let cursorInRight = false;
     let cursorInCancle = false;
+    let x1List = [];
+    let x2List = [];
+    let y1List = [];
+    let y2List = [];
     for (let i = 0; i < window.toolItemList.length; i++) {
         const buttonX = window.toolItemList[i].buttonX;
         const buttonY = window.toolItemList[i].buttonY;
+        const toolX1 = window.toolItemList[i].x;
+        const toolX2 = toolX1 + window.toolItemList[i].width;
+        const toolY1 = window.toolItemList[i].side === 'long' ? window.toolItemList[i].profitY : window.toolItemList[i].stopY;
+        const toolY2 = window.toolItemList[i].side === 'long' ? window.toolItemList[i].stopY + window.toolItemList[i].stopHeight : window.toolItemList[i].profitY + window.toolItemList[i].profitHeight;
+        x1List.push(toolX1);
+        x2List.push(toolX2);
+        y1List.push(toolY1);
+        y2List.push(toolY2);
         // console.log(`x: ${mouseX}, y: ${mouseY}, buttonX: ${buttonX}, buttonY: ${buttonY}`);
+        if (toolX1 <= mouseX && mouseX <= toolX2 && toolY1 <= mouseY && mouseY <= toolY2)
+            window.currentToolIndex = i;
         cursorInRight = cursorInRight || (mouseX > buttonX && mouseX < buttonX + enterButton.width / 2 && mouseY > buttonY && mouseY < buttonY + enterButton.height);
         cursorInCancle = cursorInCancle || (mouseX > buttonX + enterButton.width / 2 && mouseX < buttonX + enterButton.width && mouseY > buttonY && mouseY < buttonY + enterButton.height);
     }
+
+    let cursorOutOfTool = true;
+    for (let i = 0; i < window.toolItemList.length; i++) {
+        cursorOutOfTool = cursorOutOfTool && ((0 <= mouseX && mouseX <= x1List[i]) || mouseX >= x2List[i] || (0 <= mouseY && mouseY <= y1List[i]) || mouseY >= y2List[i]);
+    }
+    if (cursorOutOfTool) {
+        window.currentToolIndex = -1;
+    }
+    console.log(window.currentToolIndex);
 
 
     let mouseInStyle = ['pointer', 'not-allowed'];
@@ -250,6 +281,7 @@ ctx1.fillRect = function (x, y, width, height) {
     // 颜色识别当前为多头工具的止损
     if (window.longToolColor && ctx1.fillStyle === window.longToolColor.stopColor) {
         window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
+        window.toolsItem['stopHeight'] = height;            // 记录止损的高度
         originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
         // 颜色识别当前为多头工具的止盈
     } else if (window.longToolColor && ctx1.fillStyle === window.longToolColor.profitColor && window.toolsItem['stopY']) {
@@ -257,9 +289,12 @@ ctx1.fillRect = function (x, y, width, height) {
         originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
         let toolAndButtonInfo = {
             x: x,
-            y: y,
+            profitY: y,
+            stopY: window.toolsItem['stopY'],
             width: width,
-            height: height,
+            profitHeight: height,
+            stopHeight: window.toolsItem['stopHeight'],
+            side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
         };
         window.toolItemList.push(toolAndButtonInfo);
         draw(ctx1, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
@@ -274,9 +309,12 @@ ctx1.fillRect = function (x, y, width, height) {
         originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
         let toolAndButtonInfo = {
             x: x,
-            y: y,
+            profitY: y,
+            stopY: window.toolsItem['stopY'],
             width: width,
-            height: height,
+            profitHeight: height,
+            stopHeight: window.toolsItem['stopHeight'],
+            side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
         };
         window.toolItemList.push(toolAndButtonInfo);
         draw(ctx1, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
@@ -302,9 +340,12 @@ ctx2.fillRect = function (x, y, width, height) {
         originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
         let toolAndButtonInfo = {
             x: x,
-            y: y,
+            profitY: y,
+            stopY: window.toolsItem['stopY'],
             width: width,
-            height: height,
+            profitHeight: height,
+            stopHeight: window.toolsItem['stopHeight'],
+            side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
         };
         window.toolItemList.push(toolAndButtonInfo);
         draw(ctx2, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
@@ -319,9 +360,12 @@ ctx2.fillRect = function (x, y, width, height) {
         originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
         let toolAndButtonInfo = {
             x: x,
-            y: y,
+            profitY: y,
+            stopY: window.toolsItem['stopY'],
             width: width,
-            height: height,
+            profitHeight: height,
+            stopHeight: window.toolsItem['stopHeight'],
+            side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
         };
         window.toolItemList.push(toolAndButtonInfo);
         draw(ctx2, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮

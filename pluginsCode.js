@@ -61,11 +61,11 @@ window.fetch = function (...args) {
             let profit_level = sources[key]['state']['state']['profitLevel'];
             let stop = side === 'long' ? enter - stop_level / 10 ** small_point : enter + stop_level / 10 ** small_point;
             let profit = side === 'long' ? enter + profit_level / 10 ** small_point : enter - profit_level / 10 ** small_point;
-            let offset = sources[key]['state']['points'][0]['offset'];
+            let timestamp = sources[key]['state']['points'][0]['time_t'];
             stop = Math.round(stop * 10 ** small_point) / 10 ** small_point;
             profit = Math.round(profit * 10 ** small_point) / 10 ** small_point;
             window.buttonList[key] = {
-                offset: offset,
+                timestamp: timestamp,
                 enter: enter,
                 stop: stop,
                 profit: profit,
@@ -86,6 +86,7 @@ window.fetch = function (...args) {
 
 // 选择要观察的节点
 const targetNode = document.getElementsByClassName('toastListInner-Hvz5Irky')[0];
+const targetNode2 = document.getElementById('overlap-manager-root').children[document.getElementById('overlap-manager-root').children.length-1];
 
 // 配置观察选项
 const config = {
@@ -104,11 +105,18 @@ const callback = function (mutationsList, observer) {
     console.log('已进行一次广告拦截');
 };
 
+const callback2 = function (mutationsList, observer) {
+    // targetNode2.style.display = 'none';
+    // console.log('已进行一次大广告拦截');
+};
+
 // 创建一个 MutationObserver 实例，并传入回调函数
 const observer = new MutationObserver(callback);
+const observer2 = new MutationObserver(callback2);
 
 // 开始监听目标节点
 observer.observe(targetNode, config);
+observer2.observe(targetNode2, config);
 
 // 你可以在需要时停止观察
 // observer.disconnect();
