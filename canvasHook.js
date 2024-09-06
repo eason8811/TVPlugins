@@ -125,7 +125,8 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
         buttonColorControl = sortedButtonList[toolItemIndex].opened;
     }
     else {
-        buttonColorControl = buttonKey !== undefined && window.buttonList[buttonKey] !== undefined && window.buttonList[buttonKey] !== null && window.buttonList[buttonKey].opened;
+        // buttonColorControl = buttonKey !== undefined && window.buttonList[buttonKey] !== undefined && window.buttonList[buttonKey] !== null && window.buttonList[buttonKey].opened;
+        buttonColorControl = toolItemIndex < window.currentToolIndex ? sortedButtonList[toolItemIndex].opened : toolItemIndex === window.toolItemList.length ? sortedButtonList[toolItemIndex].opened : sortedButtonList[toolItemIndex + 1].opened;
     }
 
 
