@@ -25,6 +25,59 @@ let originCursor = canvasNode1.style.cursor
 
 let enterButton = null;
 
+function parseDateStringWithOffset(inputStr, timeStr, timeZoneOffset) {
+    // 定义一个函数，用于从解析的日期元素创建 Date 对象
+    function createDate(year, month, day) {
+        // JavaScript 中的月份是从 0 开始的（0 表示 1 月）
+        return new Date(year, month - 1, day);
+    }
+
+    // 定义正则表达式来匹配不同的日期格式
+    const patterns = [
+        { regex: /^(\d{2}) (\d{1,2}) '(\d{2})$/, parse: (m) => createDate(1900 + parseInt(m[3]), m[2], m[1]) }, // 29 9 '97 -> 1997-09-29
+        { regex: /^(\d{1,2})月 (\d{1,2})$/, parse: (m) => createDate(new Date().getFullYear(), m[1], m[2]) }, // 9月 29 -> 当前年-09-29
+        { regex: /^(\d{4})-(\d{1,2})-(\d{1,2})$/, parse: (m) => createDate(m[1], m[2], m[3]) }, // 1997-09-29 -> 1997-09-29
+        { regex: /^(\d{2})\/(\d{1,2})\/(\d{4})$/, parse: (m) => createDate(m[3], m[2], m[1]) }, // 29/09/1997 -> 1997-09-29
+        { regex: /^(\d{2})\/(\d{1,2})\/'(\d{2})$/, parse: (m) => createDate(1900 + parseInt(m[3]), m[2], m[1]) }, // 29/9/'97 -> 1997-09-29
+        { regex: /^(\d{1,2})月 (\d{1,2}), (\d{4})$/, parse: (m) => createDate(m[3], m[1], m[2]) }, // 9月 29, 1997 -> 1997-09-29
+        { regex: /^(\d{2})\/(\d{2})\/(\d{2})$/, parse: (m) => createDate(2000 + parseInt(m[1]), m[2], m[3]) }, // 97/09/29 -> 1997-09-29
+        { regex: /^(\d{2})-(\d{1,2})-(\d{4})$/, parse: (m) => createDate(m[3], m[2], m[1]) }, // 29-09-1997 -> 1997-09-29
+        { regex: /^(\d{2})-(\d{1,2})-'(\d{2})$/, parse: (m) => createDate(1900 + parseInt(m[3]), m[2], m[1]) }, // 29-9-'97 -> 1997-09-29
+    ];
+
+    let date = null;
+
+    // 遍历所有可能的格式，找到匹配的日期格式
+    for (let pattern of patterns) {
+        const match = inputStr.match(pattern.regex);
+        if (match) {
+            date = pattern.parse(match);
+            break;
+        }
+    }
+
+    // 如果没有匹配到日期格式，则返回错误
+    if (!date) {
+        throw new Error("无法解析日期字符串：" + inputStr);
+    }
+
+    // 处理时间部分并设定时区
+    const timePattern = /^\d{2}:\d{2}$/;
+    if (timePattern.test(timeStr)) {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        date.setHours(hours);
+        date.setMinutes(minutes);
+    }
+
+    // 将时区偏移量转换为毫秒 (1小时 = 3600000毫秒)
+    const offsetInMs = 0;
+
+    // 获取UTC时间戳
+    const utcTimestamp = date.getTime();
+
+    // 将时间戳调整为指定时区的时间戳
+    return utcTimestamp - offsetInMs;
+}
 
 function rgbaToHex(rgba) {
     // 提取 r, g, b, a 值
@@ -52,7 +105,7 @@ function rgbaToHex(rgba) {
 }
 
 function getToolItemIndex(x, y) {
-    window.toolItemList = window.toolItemList.sort((a, b) => a.x - b.x);
+    // window.toolItemList = window.toolItemList.sort((a, b) => a.x - b.x);
     for (let i = 0; i < window.toolItemList.length; i++) {
         const toolItem = window.toolItemList[i];
         if (toolItem.x === x && toolItem.profitY === y)
@@ -105,28 +158,15 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
     // 将toolItemList排序后，获取当前组件的索引
     let buttonColorControl;
     let toolItemIndex = getToolItemIndex(x, y);
-    let sortedButtonList = Object.values(window.buttonList).sort((a, b) => a.timestamp - b.timestamp);
-    let buttonItem = sortedButtonList[toolItemIndex];
-    let buttonKey;
-    for (let key in window.buttonList) {
-        buttonKey = undefined;
-        let currentItem = window.buttonList[key];
-        if (buttonItem === undefined || buttonItem === null)
-            break;
-        if (currentItem.offset === buttonItem.offset && currentItem.enter === buttonItem.enter
-            && currentItem.stop === buttonItem.stop && currentItem.profit === buttonItem.profit
-            && currentItem.side === buttonItem.side) {
-            buttonKey = key;
-            break;
-        }
-    }
+    let buttonList = Object.values(window.buttonList);
 
-    if (window.currentToolIndex === -1) {
-        buttonColorControl = sortedButtonList[toolItemIndex].opened;
+    if (window.currentToolIndex === -1 || window.toolItemList.length < window.currentToolIndex || window.currentToolIndex === buttonList.length - 1) {
+        buttonColorControl = buttonList[toolItemIndex].opened;
+    } else if (toolItemIndex < buttonList.length-1) {
+        buttonColorControl = buttonList[toolItemIndex + 1].opened;
     }
     else {
-        // buttonColorControl = buttonKey !== undefined && window.buttonList[buttonKey] !== undefined && window.buttonList[buttonKey] !== null && window.buttonList[buttonKey].opened;
-        buttonColorControl = toolItemIndex < window.currentToolIndex ? sortedButtonList[toolItemIndex].opened : toolItemIndex === window.toolItemList.length ? sortedButtonList[toolItemIndex].opened : sortedButtonList[toolItemIndex + 1].opened;
+        buttonColorControl = buttonList[window.currentToolIndex].opened;
     }
 
 
@@ -200,35 +240,28 @@ function mouseMoveEvent(event) {
 
     let cursorInRight = false;
     let cursorInCancle = false;
-    let x1List = [];
-    let x2List = [];
-    let y1List = [];
-    let y2List = [];
     for (let i = 0; i < window.toolItemList.length; i++) {
         const buttonX = window.toolItemList[i].buttonX;
         const buttonY = window.toolItemList[i].buttonY;
-        const toolX1 = window.toolItemList[i].x;
-        const toolX2 = toolX1 + window.toolItemList[i].width;
-        const toolY1 = window.toolItemList[i].side === 'long' ? window.toolItemList[i].profitY : window.toolItemList[i].stopY;
-        const toolY2 = window.toolItemList[i].side === 'long' ? window.toolItemList[i].stopY + window.toolItemList[i].stopHeight : window.toolItemList[i].profitY + window.toolItemList[i].profitHeight;
-        x1List.push(toolX1);
-        x2List.push(toolX2);
-        y1List.push(toolY1);
-        y2List.push(toolY2);
-        // console.log(`x: ${mouseX}, y: ${mouseY}, buttonX: ${buttonX}, buttonY: ${buttonY}`);
-        if (toolX1 <= mouseX && mouseX <= toolX2 && toolY1 <= mouseY && mouseY <= toolY2)
-            window.currentToolIndex = i;
         cursorInRight = cursorInRight || (mouseX > buttonX && mouseX < buttonX + enterButton.width / 2 && mouseY > buttonY && mouseY < buttonY + enterButton.height);
         cursorInCancle = cursorInCancle || (mouseX > buttonX + enterButton.width / 2 && mouseX < buttonX + enterButton.width && mouseY > buttonY && mouseY < buttonY + enterButton.height);
     }
 
-    let cursorOutOfTool = true;
-    for (let i = 0; i < window.toolItemList.length; i++) {
-        cursorOutOfTool = cursorOutOfTool && ((0 <= mouseX && mouseX <= x1List[i]) || mouseX >= x2List[i] || (0 <= mouseY && mouseY <= y1List[i]) || mouseY >= y2List[i]);
+    let buttonList = Object.values(window.buttonList);
+    for (let i = 0; i < buttonList.length; i++) {
+        if (buttonList[i].timestamp_start * 1000 <= window.currentCursorTimestamp && window.currentCursorTimestamp <= buttonList[i].timestamp_end * 1000
+            && (buttonList[i].side === 'short' ? (buttonList[i].profit <= window.currentCursorPrice && window.currentCursorPrice <= buttonList[i].stop) : (buttonList[i].profit >= window.currentCursorPrice && window.currentCursorPrice >= buttonList[i].stop))) {
+            window.currentToolIndex = i;
+            break;
+        }
     }
-    if (cursorOutOfTool) {
+    let outsideTool = true;
+    for (let i = 0; i < buttonList.length; i++) {
+        outsideTool = outsideTool && !(buttonList[i].timestamp_start * 1000 <= window.currentCursorTimestamp && window.currentCursorTimestamp <= buttonList[i].timestamp_end * 1000
+            && (buttonList[i].side === 'short' ? (buttonList[i].profit <= window.currentCursorPrice && window.currentCursorPrice <= buttonList[i].stop) : (buttonList[i].profit >= window.currentCursorPrice && window.currentCursorPrice >= buttonList[i].stop)));
+    }
+    if (outsideTool)
         window.currentToolIndex = -1;
-    }
     console.log(window.currentToolIndex);
 
 
@@ -375,6 +408,46 @@ ctx2.fillRect = function (x, y, width, height) {
         originalFillRect1.call(this, x, y, width, height);
     }
 };
+
+// 保存原始的 fillText 方法
+const timeAxiscanvasNode2 = document.getElementsByClassName('chart-markup-table time-axis')[0].children[0].children[1];
+const timeAxisctx2 = timeAxiscanvasNode2.getContext('2d');
+const originalTimeAxisFillText2 = timeAxisctx2.fillText;
+
+
+// 重写 fillText 方法
+timeAxisctx2.fillText = function (text, x, y, maxWidth) {
+    // 在这里可以执行你自己的逻辑，例如打印出文本或修改它
+    // console.log("Hooked fillText(2):", text, x, y, maxWidth);
+    let date = text.split('   ')[0];
+    let firstSpaceIndex = date.indexOf(' ');
+    date = date.substring(firstSpaceIndex + 1);
+    let time = text.split('   ')[1];
+    let timeZone = parseInt(document.getElementsByClassName('inline-BXXUwft2')[0].children[0].children[0].children[0].innerHTML.match(/\(UTC([+-]\d{1,2})\)/)[1])
+    window.currentCursorTimestamp = parseDateStringWithOffset(date, time, timeZone);
+    // console.log(new Date(window.currentCursorTimestamp));
+    // 调用原始的 fillText 方法
+    originalTimeAxisFillText2.call(this, text, x, y, maxWidth);
+};
+
+// 保存原始的 fillText 方法
+const priceAxiscanvasNode2 = document.getElementsByClassName('price-axis')[0].children[1];
+const priceAxisctx2 = priceAxiscanvasNode2.getContext('2d');
+const originalPriceAxisFillText2 = priceAxisctx2.fillText;
+
+
+// 重写 fillText 方法
+priceAxisctx2.fillText = function (text, x, y, maxWidth) {
+    // 在这里可以执行你自己的逻辑，例如打印出文本或修改它
+    // console.log("Hooked fillText(2):", text, x, y, maxWidth);
+    window.currentCursorPrice = parseFloat(text.replace(/,/g, ''));
+    // 调用原始的 fillText 方法
+    originalPriceAxisFillText2.call(this, text, x, y, maxWidth);
+};
+
+// 还原 fillText 方法
+// timeAxisctx2.fillText = originalAxisFillText2;
+// window.Date = originalDate;
 
 // // 还原 fillRect 方法
 // ctx1.fillRect = originalFillRect1;

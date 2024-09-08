@@ -48,11 +48,13 @@ function loadTools(sources) {
         let profit_level = sources[key]['state']['state']['profitLevel'];
         let stop = side === 'long' ? enter - stop_level / 10 ** small_point : enter + stop_level / 10 ** small_point;
         let profit = side === 'long' ? enter + profit_level / 10 ** small_point : enter - profit_level / 10 ** small_point;
-        let timestamp = sources[key]['state']['points'][0]['time_t'];
+        let timestamp_start = sources[key]['state']['points'][0]['time_t'];
+        let timestamp_end = sources[key]['state']['points'][1]['time_t'];
         stop = Math.round(stop * 10 ** small_point) / 10 ** small_point;
         profit = Math.round(profit * 10 ** small_point) / 10 ** small_point;
         window.buttonList[key] = {
-            timestamp: timestamp,
+            timestamp_start: timestamp_start,
+            timestamp_end: timestamp_end,
             enter: enter,
             stop: stop,
             profit: profit,
