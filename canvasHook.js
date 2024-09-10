@@ -262,7 +262,7 @@ function mouseMoveEvent(event) {
     }
     if (outsideTool)
         window.currentToolIndex = -1;
-    console.log(window.currentToolIndex);
+    // console.log(window.currentToolIndex);
 
 
     let mouseInStyle = ['pointer', 'not-allowed'];

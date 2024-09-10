@@ -50,6 +50,15 @@ function loadTools(sources) {
         let profit = side === 'long' ? enter + profit_level / 10 ** small_point : enter - profit_level / 10 ** small_point;
         let timestamp_start = sources[key]['state']['points'][0]['time_t'];
         let timestamp_end = sources[key]['state']['points'][1]['time_t'];
+        let offset_start = parseInt(sources[key]['state']['points'][0]['offset']);
+        let offset_end = parseInt(sources[key]['state']['points'][1]['offset']);
+
+        if (offset_start !== 0) {
+            timestamp_start += window.interval * offset_start * 60
+        }
+        if (offset_end !== 0) {
+            timestamp_end += window.interval * offset_end * 60
+        }
         stop = Math.round(stop * 10 ** small_point) / 10 ** small_point;
         profit = Math.round(profit * 10 ** small_point) / 10 ** small_point;
         window.buttonList[key] = {
@@ -78,7 +87,7 @@ window.fetch = function (...args) {
         console.log('拦截到请求：', url);
         if (url.includes('charttimeline')) {
             for (let pair of args[1].body.entries()) {
-                if (pair[0] === 'interval'){
+                if (pair[0] === 'interval') {
                     window.interval = parseInt(pair[1]);
                     console.log('interval:', window.interval);
                     break;
