@@ -161,12 +161,12 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
     let buttonList = Object.values(window.buttonList);
 
     if (window.currentToolIndex === -1 || window.toolItemList.length < window.currentToolIndex || window.currentToolIndex === buttonList.length - 1) {
-        buttonColorControl = buttonList[toolItemIndex].opened;
+        buttonColorControl = buttonList[toolItemIndex + 1] !== undefined ? buttonList[toolItemIndex].opened : false;
     } else if (toolItemIndex < buttonList.length-1) {
-        buttonColorControl = buttonList[toolItemIndex + 1].opened;
+        buttonColorControl = buttonList[toolItemIndex + 1] !== undefined ? buttonList[toolItemIndex + 1].opened : false;
     }
     else {
-        buttonColorControl = buttonList[window.currentToolIndex].opened;
+        buttonColorControl = buttonList[toolItemIndex + 1] !== undefined ? buttonList[window.currentToolIndex].opened : false;
     }
 
 

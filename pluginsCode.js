@@ -74,8 +74,18 @@ window.fetch = function (...args) {
     const url = args[0];
 
     // 检查 URL 是否包含 'source'
-    if (url.includes('sources?chart_id=_shared')) {
+    if (url.includes('sources?chart_id=_shared') || url.includes('charttimeline')) {
         console.log('拦截到请求：', url);
+        if (url.includes('charttimeline')) {
+            for (let pair of args[1].body.entries()) {
+                if (pair[0] === 'interval'){
+                    window.interval = parseInt(pair[1]);
+                    console.log('interval:', window.interval);
+                    break;
+                }
+            }
+            return originalFetch.apply(this, arguments);
+        }
         if (args[1].method !== 'PUT' && args[1].method !== 'GET')
             return originalFetch.apply(this, arguments);
         if (args[1].method === 'GET') {
