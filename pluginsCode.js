@@ -74,6 +74,37 @@ function loadTools(sources) {
     }
 }
 
+async function fetchAndReadStream(response) {
+
+    // 获取响应体的 ReadableStream
+    const reader = response.body.getReader();
+
+    // 创建一个解码器，用于将 Uint8Array 转换为字符串
+    const decoder = new TextDecoder();
+    let result = ''; // 用于存储最终的字符串结果
+    let done = false;
+
+    // 逐块读取数据
+    while (!done) {
+        const { value, done: isDone } = await reader.read();
+        done = isDone;
+
+        if (value) {
+            // 将 Uint8Array 数据转换为字符串
+            result += decoder.decode(value, { stream: true });
+            console.log(result);
+        }
+    }
+
+    // 读取结束后，进行最后的解码
+    result += decoder.decode();
+
+    // 打印或处理最终的结果
+    console.log("Streamed response:", result);
+
+    // return result;
+}
+
 window.longToolColor = null;
 window.shortToolColor = null;
 window.buttonList = {};
@@ -93,7 +124,13 @@ window.fetch = function (...args) {
                     break;
                 }
             }
-            return originalFetch.apply(this, arguments);
+            return originalFetch.apply(this, arguments).then(response => {
+                // 克隆 response，以便后续处理
+                const responseClone = response.clone();
+
+                fetchAndReadStream(responseClone);
+                return response;  // 返回原始的 response 对象，便于后续处理
+            });
         }
         if (args[1].method !== 'PUT' && args[1].method !== 'GET')
             return originalFetch.apply(this, arguments);
