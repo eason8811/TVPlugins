@@ -15,7 +15,7 @@ async function generateSignature(secret_key, data) {
     const key = await crypto.subtle.importKey(
         'raw',
         encoder.encode(secret_key),
-        { name: 'HMAC', hash: 'SHA-256' },
+        {name: 'HMAC', hash: 'SHA-256'},
         false,
         ['sign']
     );
@@ -77,3 +77,17 @@ class BinanceAPI {
         }
     }
 }
+
+// 使用示例
+const api_key = 'i7F6rx3Tcz6eJlSVzBc4dpV6qyszCiCOIpSz7gv9mdyq9UjVizrlu2kkmlvUIJSw'
+const secret_key = 'mwU7KCworFZ17WIOqRuGaRmtwT3nnUDBhtg8HQf9CHFB7KVSxev0Rwym5mgfWjDx'
+const binance = new BinanceAPI('https://fapi.binance.com', api_key, secret_key);
+
+// 调用GET方法
+let requestBody = {
+    symbol: 'BTCUSDT',
+    interval: '15m',
+    limit: 10,
+}
+binance.api('GET', '/fapi/v1/klines', requestBody)
+    .then(result => alert(result));

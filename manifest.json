@@ -21,7 +21,7 @@
         "https://cn.tradingview.com/*",
         "https://tradingview.com/*"
       ],
-      "js": ["content-script.js"],
+      "js": ["content.js"],
       "run_at": "document_end"
     }
   ],
