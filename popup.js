@@ -1,11 +1,41 @@
-// 获取 checkbox 元素
-const checkbox = document.getElementById('adsBlock');
-
-// 为 checkbox 添加 change 事件监听器
-checkbox.addEventListener('change', function () {
-    if (checkbox.checked) {
-        console.log('广告拦截已开启');
-    } else {
-        console.log('广告拦截已关闭');
+function getCache(key) {
+    let cacheObj = JSON.parse(localStorage.getItem(key));
+    if (cacheObj) {
+        return cacheObj.value;
     }
-});
+    return null;
+}
+
+function setCache(key, value) {
+    let cacheObj = {
+        value: value,
+    }
+    localStorage.setItem(key, JSON.stringify(cacheObj));
+}
+
+(function adsBlockInit() {
+    // 获取 checkbox 元素
+    const adsBlockCheckBox = document.getElementById('adsBlock');
+    const toolsButtonCheckBox = document.getElementById('toolsButton');
+    let adsBlockCheckBoxCache = getCache('adsBlock');
+    let toolsButtonCheckBoxCache = getCache('toolsButton');
+
+    // 开启广告拦截checkBox
+    if (adsBlockCheckBoxCache !== null)
+        adsBlockCheckBox.checked = adsBlockCheckBoxCache;
+    // 为 checkbox 添加 change 事件监听器
+    adsBlockCheckBox.addEventListener('change', function () {
+        setCache('adsBlock', adsBlockCheckBox.checked);
+        console.log(adsBlockCheckBox.checked);
+    });
+
+    // 开启下单按钮checkBox
+    if (toolsButtonCheckBoxCache !== null)
+        toolsButtonCheckBox.checked = toolsButtonCheckBoxCache;
+    // 为 checkbox 添加 change 事件监听器
+    toolsButtonCheckBox.addEventListener('change', function () {
+        setCache('toolsButton', toolsButtonCheckBox.checked);
+        console.log(toolsButtonCheckBox.checked);
+    });
+})();
+

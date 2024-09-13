@@ -3,14 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <style>
+        .choice{
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body style="width: 200px; height: 230px">
-
-
-<label>
-    <input id="adsBlock" type="checkbox" style="vertical-align: middle" checked>
-    <span>开启广告拦截</span>
-</label>
+<div>
+    <label>
+        <input id="adsBlock" type="checkbox" style="vertical-align: middle" checked>
+        <span class="choice">开启广告拦截</span>
+    </label>
+</div>
+<div>
+    <label>
+        <input id="toolsButton" type="checkbox" style="vertical-align: middle" checked>
+        <span class="choice">开启下单按钮</span>
+    </label>
+</div>
 
 
 <script src="popup.js"></script>
