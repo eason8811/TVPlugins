@@ -1,6 +1,6 @@
 let checkBoxIDList = ['adsBlock', 'toolsButton']
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.key && checkBoxIDList.includes(request.key)) {
         setCache(request.key, request.value);
         sendResponse({response: `${request.key},${request.value} content.js已收到`});  // 可选的，返回响应给 background.js
@@ -98,57 +98,61 @@ function loadTools(sources) {
     }
 }
 
-window.longToolColor = null;
-window.shortToolColor = null;
-window.buttonList = {};
+window.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM fully loaded and parsed');
+    window.longToolColor = null;
+    window.shortToolColor = null;
+    window.buttonList = {};
 
 
-const originalFetch = window.fetch;
-window.fetch = function (...args) {
-    const url = args[0];
+    const originalFetch = window.fetch;
+    window.fetch = function (...args) {
+        const url = args[0];
 
-    // 检查 URL 是否包含 'source'
-    if (url.includes('sources?chart_id=_shared') || url.includes('charttimeline')) {
-        console.log('拦截到请求：', url);
-        if (url.includes('charttimeline')) {
-            for (let pair of args[1].body.entries()) {
-                if (pair[0] === 'interval') {
-                    window.interval = parseInt(pair[1]);
-                    console.log('interval:', window.interval);
-                    break;
+        // 检查 URL 是否包含 'source'
+        if (url.includes('sources?chart_id=_shared') || url.includes('charttimeline')) {
+            console.log('拦截到请求：', url);
+            if (url.includes('charttimeline')) {
+                for (let pair of args[1].body.entries()) {
+                    if (pair[0] === 'interval') {
+                        window.interval = parseInt(pair[1]);
+                        console.log('interval:', window.interval);
+                        break;
+                    }
                 }
-            }
-            return originalFetch.apply(this, arguments).then(response => {
-                // 克隆 response，以便后续处理
-                const responseClone = response.clone();
+                return originalFetch.apply(this, arguments).then(response => {
+                    // 克隆 response，以便后续处理
+                    const responseClone = response.clone();
 
-                fetchAndReadStream(responseClone);
-                return response;  // 返回原始的 response 对象，便于后续处理
-            });
-        }
-        if (args[1].method !== 'PUT' && args[1].method !== 'GET')
-            return originalFetch.apply(this, arguments);
-        if (args[1].method === 'GET') {
-            return originalFetch.apply(this, arguments).then(response => {
-                // 克隆 response，以便后续处理
-                const responseClone = response.clone();
-
-                return responseClone.json().then(jsonData => {
-                    let sources = jsonData.payload.sources;
-                    loadTools(sources);
+                    fetchAndReadStream(responseClone);
                     return response;  // 返回原始的 response 对象，便于后续处理
                 });
-            });
-        }
-        console.log(JSON.parse(args[1].body));
-        let sources = JSON.parse(args[1].body).sources;
-        console.log(sources);
-        loadTools(sources);
-    }
+            }
+            if (args[1].method !== 'PUT' && args[1].method !== 'GET')
+                return originalFetch.apply(this, arguments);
+            if (args[1].method === 'GET') {
+                return originalFetch.apply(this, arguments).then(response => {
+                    // 克隆 response，以便后续处理
+                    const responseClone = response.clone();
 
-    // 调用原始的 fetch 方法
-    return originalFetch.apply(this, arguments);
-};
+                    return responseClone.json().then(jsonData => {
+                        let sources = jsonData.payload.sources;
+                        loadTools(sources);
+                        return response;  // 返回原始的 response 对象，便于后续处理
+                    });
+                });
+            }
+            console.log(JSON.parse(args[1].body));
+            let sources = JSON.parse(args[1].body).sources;
+            console.log(sources);
+            loadTools(sources);
+        }
+
+        // 调用原始的 fetch 方法
+        return originalFetch.apply(this, arguments);
+    };
+});
+
 
 if (getCache('adsBlock')) {
     window.addEventListener('load', function () {
@@ -188,8 +192,8 @@ if (getCache('adsBlock')) {
         observer.observe(targetNode, config);
         observer2.observe(targetNode2, config);
 
-    // 你可以在需要时停止观察
-    // observer.disconnect();
+        // 你可以在需要时停止观察
+        // observer.disconnect();
 
     });
 }
