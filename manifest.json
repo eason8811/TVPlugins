@@ -5,7 +5,8 @@
   "description": "这是一个示例插件。",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "webRequest"
   ],
   "host_permissions": [
     "https://fapi.binance.com/*",
@@ -22,7 +23,7 @@
         "https://tradingview.com/*"
       ],
       "js": ["content.js"],
-      "run_at": "document_end"
+      "run_at": "document_start"
     }
   ],
   "action": {

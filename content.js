@@ -1,3 +1,12 @@
+let checkBoxIDList = ['adsBlock', 'toolsButton']
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if (request.key && checkBoxIDList.includes(request.key)) {
+        setCache(request.key, request.value);
+        sendResponse({response: `${request.key},${request.value} content.js已收到`});  // 可选的，返回响应给 background.js
+    }
+});
+
 function getCache(key) {
     let cacheObj = JSON.parse(localStorage.getItem(key));
     if (cacheObj) {
