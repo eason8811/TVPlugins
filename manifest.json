@@ -22,7 +22,13 @@
         "https://cn.tradingview.com/*",
         "https://tradingview.com/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
+      "all_frames": true,
+      "permissions": [
+        "tabs"
+      ],
       "run_at": "document_start"
     }
   ],
