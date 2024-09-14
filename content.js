@@ -1,4 +1,4 @@
-let checkBoxIDList = ['adsBlock', 'toolsButton']
+let checkBoxIDList = ['adsBlock', 'toolsButton', 'toolsButtonWidth']
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.key && checkBoxIDList.includes(request.key)) {
@@ -25,7 +25,7 @@ function setCache(key, value) {
 // 动态加载fetchHook.js脚本
 // 动态创建 script 标签，并将其插入到页面中
 function injectScript(file) {
-    console.log('fetchHook.js 脚本开始加载');
+    console.log(`${file} 脚本开始加载`);
     const script = document.createElement('script');
     script.type = 'text/javascript';
     script.id = 'fetchHook';
@@ -34,14 +34,17 @@ function injectScript(file) {
     script.onload = function() {
         // 在脚本加载完成后，可以选择移除它，防止污染 DOM
         // this.remove();  // 这里选择在加载完后移除 <script> 标签
-        console.log('fetchHook.js 脚本加载完成');
+        console.log(`${file} 脚本加载完成`);
     };
     (document.head || document.documentElement).appendChild(script);  // 将脚本插入页面
 }
 
 // 注入 fetchHook.js
 injectScript('fetchHook.js');
-
+// 在页面加载完成后注入canvasHook.js脚本
+window.addEventListener('load', function () {
+    injectScript('canvasHook.js');
+});
 
 
 if (getCache('adsBlock')) {

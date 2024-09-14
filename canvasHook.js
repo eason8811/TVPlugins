@@ -7,6 +7,16 @@ const canvasNode2 = document.getElementsByClassName('chart-gui-wrapper')[0].chil
 const ctx2 = canvasNode2.getContext('2d');
 const originalFillRect2 = ctx2.fillRect;
 
+// 保存原始的 fillText 方法
+const timeAxiscanvasNode2 = document.getElementsByClassName('chart-markup-table time-axis')[0].children[0].children[1];
+const timeAxisctx2 = timeAxiscanvasNode2.getContext('2d');
+const originalTimeAxisFillText2 = timeAxisctx2.fillText;
+
+// 保存原始的 fillText 方法
+const priceAxiscanvasNode2 = document.getElementsByClassName('price-axis')[0].children[1];
+const priceAxisctx2 = priceAxiscanvasNode2.getContext('2d');
+const originalPriceAxisFillText2 = priceAxisctx2.fillText;
+
 window.toolsItem = {
     profitY: null,
     stopY: null,
@@ -14,16 +24,20 @@ window.toolsItem = {
 };
 window.currentToolIndex = -1;
 
-let defaultMaxWidth = 110;
-let defaultMinWidth = 75;
-let defaultMaxHeight = 55;
-let defaultMinHeight = 37.5;
-let widthRatio = 0.5;
-let heightRatio = 0.3;
+let defaultWidth = getCache('toolsButtonWidth') ? getCache('toolsButtonWidth') : 75;
+let defaultHeight = defaultWidth / 2;
 let defaultRadius = 10;
 let originCursor = canvasNode1.style.cursor
 
 let enterButton = null;
+
+function getCache(key) {
+    let cacheObj = JSON.parse(localStorage.getItem(key));
+    if (cacheObj) {
+        return cacheObj.value;
+    }
+    return null;
+}
 
 function parseDateStringWithOffset(inputStr, timeStr, timeZoneOffset) {
     // 定义一个函数，用于从解析的日期元素创建 Date 对象
@@ -34,15 +48,15 @@ function parseDateStringWithOffset(inputStr, timeStr, timeZoneOffset) {
 
     // 定义正则表达式来匹配不同的日期格式
     const patterns = [
-        { regex: /^(\d{2}) (\d{1,2}) '(\d{2})$/, parse: (m) => createDate(1900 + parseInt(m[3]), m[2], m[1]) }, // 29 9 '97 -> 1997-09-29
-        { regex: /^(\d{1,2})月 (\d{1,2})$/, parse: (m) => createDate(new Date().getFullYear(), m[1], m[2]) }, // 9月 29 -> 当前年-09-29
-        { regex: /^(\d{4})-(\d{1,2})-(\d{1,2})$/, parse: (m) => createDate(m[1], m[2], m[3]) }, // 1997-09-29 -> 1997-09-29
-        { regex: /^(\d{2})\/(\d{1,2})\/(\d{4})$/, parse: (m) => createDate(m[3], m[2], m[1]) }, // 29/09/1997 -> 1997-09-29
-        { regex: /^(\d{2})\/(\d{1,2})\/'(\d{2})$/, parse: (m) => createDate(1900 + parseInt(m[3]), m[2], m[1]) }, // 29/9/'97 -> 1997-09-29
-        { regex: /^(\d{1,2})月 (\d{1,2}), (\d{4})$/, parse: (m) => createDate(m[3], m[1], m[2]) }, // 9月 29, 1997 -> 1997-09-29
-        { regex: /^(\d{2})\/(\d{2})\/(\d{2})$/, parse: (m) => createDate(2000 + parseInt(m[1]), m[2], m[3]) }, // 97/09/29 -> 1997-09-29
-        { regex: /^(\d{2})-(\d{1,2})-(\d{4})$/, parse: (m) => createDate(m[3], m[2], m[1]) }, // 29-09-1997 -> 1997-09-29
-        { regex: /^(\d{2})-(\d{1,2})-'(\d{2})$/, parse: (m) => createDate(1900 + parseInt(m[3]), m[2], m[1]) }, // 29-9-'97 -> 1997-09-29
+        {regex: /^(\d{2}) (\d{1,2}) '(\d{2})$/, parse: (m) => createDate(1900 + parseInt(m[3]), m[2], m[1])}, // 29 9 '97 -> 1997-09-29
+        {regex: /^(\d{1,2})月 (\d{1,2})$/, parse: (m) => createDate(new Date().getFullYear(), m[1], m[2])}, // 9月 29 -> 当前年-09-29
+        {regex: /^(\d{4})-(\d{1,2})-(\d{1,2})$/, parse: (m) => createDate(m[1], m[2], m[3])}, // 1997-09-29 -> 1997-09-29
+        {regex: /^(\d{2})\/(\d{1,2})\/(\d{4})$/, parse: (m) => createDate(m[3], m[2], m[1])}, // 29/09/1997 -> 1997-09-29
+        {regex: /^(\d{2})\/(\d{1,2})\/'(\d{2})$/, parse: (m) => createDate(1900 + parseInt(m[3]), m[2], m[1])}, // 29/9/'97 -> 1997-09-29
+        {regex: /^(\d{1,2})月 (\d{1,2}), (\d{4})$/, parse: (m) => createDate(m[3], m[1], m[2])}, // 9月 29, 1997 -> 1997-09-29
+        {regex: /^(\d{2})\/(\d{2})\/(\d{2})$/, parse: (m) => createDate(2000 + parseInt(m[1]), m[2], m[3])}, // 97/09/29 -> 1997-09-29
+        {regex: /^(\d{2})-(\d{1,2})-(\d{4})$/, parse: (m) => createDate(m[3], m[2], m[1])}, // 29-09-1997 -> 1997-09-29
+        {regex: /^(\d{2})-(\d{1,2})-'(\d{2})$/, parse: (m) => createDate(1900 + parseInt(m[3]), m[2], m[1])}, // 29-9-'97 -> 1997-09-29
     ];
 
     let date = null;
@@ -114,13 +128,13 @@ function getToolItemIndex(x, y) {
 }
 
 function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
+    // x: 横坐标, y: 纵坐标, width: 宽度, height: 高度, radius: 圆角半径
     // 绘制下单按钮
     enterButton = {
-        height: Math.min(Math.max(defaultMinHeight, widthRatio * height), defaultMaxHeight),
-        width: Math.min(Math.max(defaultMinWidth, heightRatio * width, 2 * this.height), defaultMaxWidth),
+        height: defaultHeight,
+        width: defaultWidth,
         opened: false,
     };
-    enterButton.width = Math.min(Math.max(defaultMinWidth, heightRatio * width, 2 * enterButton.height), defaultMaxWidth);
     ctx.save();
 
     let buttonX, buttonY;
@@ -162,10 +176,9 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
 
     if (window.currentToolIndex === -1 || window.toolItemList.length < window.currentToolIndex || window.currentToolIndex === buttonList.length - 1) {
         buttonColorControl = buttonList[toolItemIndex + 1] !== undefined ? buttonList[toolItemIndex].opened : false;
-    } else if (toolItemIndex < buttonList.length-1) {
+    } else if (toolItemIndex < buttonList.length - 1) {
         buttonColorControl = buttonList[toolItemIndex + 1] !== undefined ? buttonList[toolItemIndex + 1].opened : false;
-    }
-    else {
+    } else {
         buttonColorControl = buttonList[toolItemIndex + 1] !== undefined ? buttonList[window.currentToolIndex].opened : false;
     }
 
@@ -304,154 +317,166 @@ function setupEventListeners(canvas) {
     canvas.addEventListener('click', clickEvent);
 }
 
+function hooks() {
+    // 覆盖 fillRect 方法
+    ctx1.fillRect = function (x, y, width, height) {
+        if (x === 0 && y === 0) {
+            // 记录工具列表
+            window.toolItemList = [];
+        }
 
-// 覆盖 fillRect 方法
-ctx1.fillRect = function (x, y, width, height) {
-    if (x === 0 && y === 0) {
-        // 记录工具列表
-        window.toolItemList = [];
+        // 颜色识别当前为多头工具的止损
+        if (window.longToolColor && ctx1.fillStyle === window.longToolColor.stopColor) {
+            window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
+            window.toolsItem['stopHeight'] = height;            // 记录止损的高度
+            originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
+            // 颜色识别当前为多头工具的止盈
+        } else if (window.longToolColor && ctx1.fillStyle === window.longToolColor.profitColor && window.toolsItem['stopY']) {
+            window.toolsItem['profitY'] = y;                    // 记录止盈的绘图位置
+            originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
+            let toolAndButtonInfo = {
+                x: x,
+                profitY: y,
+                stopY: window.toolsItem['stopY'],
+                width: width,
+                profitHeight: height,
+                stopHeight: window.toolsItem['stopHeight'],
+                side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
+            };
+            window.toolItemList.push(toolAndButtonInfo);
+            draw(ctx1, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
+            setupEventListeners(canvasNode1);
+            // 颜色识别当前为空头工具的止损
+        } else if (window.shortToolColor && ctx1.fillStyle === window.shortToolColor.stopColor) {
+            window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
+            originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
+            // 颜色识别当前为空头工具的止盈
+        } else if (window.shortToolColor && ctx1.fillStyle === window.shortToolColor.profitColor && window.toolsItem['stopY']) {
+            window.toolsItem['profitY'] = y;
+            originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
+            let toolAndButtonInfo = {
+                x: x,
+                profitY: y,
+                stopY: window.toolsItem['stopY'],
+                width: width,
+                profitHeight: height,
+                stopHeight: window.toolsItem['stopHeight'],
+                side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
+            };
+            window.toolItemList.push(toolAndButtonInfo);
+            draw(ctx1, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
+            setupEventListeners(canvasNode1);
+        } else {
+            originalFillRect1.call(this, x, y, width, height);
+        }
+    };
+
+    // 覆盖 fillRect 方法
+    ctx2.fillRect = function (x, y, width, height) {
+        if (x === 0 && y === 0) {
+            // 记录工具列表
+            window.toolItemList = [];
+        }
+        // 颜色识别当前为多头工具的止损
+        if (window.longToolColor && ctx2.fillStyle === window.longToolColor.stopColor) {
+            window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
+            originalFillRect2.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
+            // 颜色识别当前为多头工具的止盈
+        } else if (window.longToolColor && ctx2.fillStyle === window.longToolColor.profitColor && window.toolsItem['stopY']) {
+            window.toolsItem['profitY'] = y;                    // 记录止盈的绘图位置
+            originalFillRect2.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
+            let toolAndButtonInfo = {
+                x: x,
+                profitY: y,
+                stopY: window.toolsItem['stopY'],
+                width: width,
+                profitHeight: height,
+                stopHeight: window.toolsItem['stopHeight'],
+                side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
+            };
+            window.toolItemList.push(toolAndButtonInfo);
+            draw(ctx2, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
+            setupEventListeners(canvasNode2);
+            // 颜色识别当前为空头工具的止损
+        } else if (window.shortToolColor && ctx2.fillStyle === window.shortToolColor.stopColor) {
+            window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
+            originalFillRect2.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
+            // 颜色识别当前为空头工具的止盈
+        } else if (window.shortToolColor && ctx2.fillStyle === window.shortToolColor.profitColor && window.toolsItem['stopY']) {
+            window.toolsItem['profitY'] = y;
+            originalFillRect2.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
+            let toolAndButtonInfo = {
+                x: x,
+                profitY: y,
+                stopY: window.toolsItem['stopY'],
+                width: width,
+                profitHeight: height,
+                stopHeight: window.toolsItem['stopHeight'],
+                side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
+            };
+            window.toolItemList.push(toolAndButtonInfo);
+            draw(ctx2, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
+            setupEventListeners(canvasNode2);
+        } else {
+            originalFillRect2.call(this, x, y, width, height);
+        }
+    };
+
+    // 重写 fillText 方法
+    timeAxisctx2.fillText = function (text, x, y, maxWidth) {
+        // 在这里可以执行你自己的逻辑，例如打印出文本或修改它
+        // console.log("Hooked fillText(2):", text, x, y, maxWidth);
+        let date = text.split('   ')[0];
+        let firstSpaceIndex = date.indexOf(' ');
+        date = date.substring(firstSpaceIndex + 1);
+        let time = text.split('   ')[1];
+        let timeZone = parseInt(document.getElementsByClassName('inline-BXXUwft2')[0].children[0].children[0].children[0].innerHTML.match(/\(UTC([+-]\d{1,2})\)/)[1])
+        window.currentCursorTimestamp = parseDateStringWithOffset(date, time, timeZone);
+        // console.log(new Date(window.currentCursorTimestamp));
+        // 调用原始的 fillText 方法
+        originalTimeAxisFillText2.call(this, text, x, y, maxWidth);
+    };
+
+    // 重写 fillText 方法
+    priceAxisctx2.fillText = function (text, x, y, maxWidth) {
+        // 在这里可以执行你自己的逻辑，例如打印出文本或修改它
+        // console.log("Hooked fillText(2):", text, x, y, maxWidth);
+        window.currentCursorPrice = parseFloat(text.replace(/,/g, ''));
+        // 调用原始的 fillText 方法
+        originalPriceAxisFillText2.call(this, text, x, y, maxWidth);
+    };
+}
+
+function restore() {
+    ctx1.fillRect = originalFillRect1;
+    ctx2.fillRect = originalFillRect2;
+    timeAxisctx2.fillText = originalTimeAxisFillText2;
+    priceAxisctx2.fillText = originalPriceAxisFillText2;
+}
+
+let lastValueToolsButton = undefined;
+let lastValueToolsButtonWidth = undefined;
+
+setInterval(function () {
+    const newValueToolsButton = localStorage.getItem('toolsButton');
+    const newValueToolsButtonWidth = localStorage.getItem('toolsButtonWidth');
+
+    if (newValueToolsButton !== lastValueToolsButton) {
+        // toolsButton开启，就hook函数
+        if (JSON.parse(newValueToolsButton).value) {
+            console.log('toolsButton开启，hook完成');
+            hooks();
+        } else {
+            console.log('toolsButton关闭，恢复原始函数');
+            restore();
+        }
+        lastValueToolsButton = newValueToolsButton;
     }
 
-    // 颜色识别当前为多头工具的止损
-    if (window.longToolColor && ctx1.fillStyle === window.longToolColor.stopColor) {
-        window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
-        window.toolsItem['stopHeight'] = height;            // 记录止损的高度
-        originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
-        // 颜色识别当前为多头工具的止盈
-    } else if (window.longToolColor && ctx1.fillStyle === window.longToolColor.profitColor && window.toolsItem['stopY']) {
-        window.toolsItem['profitY'] = y;                    // 记录止盈的绘图位置
-        originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
-        let toolAndButtonInfo = {
-            x: x,
-            profitY: y,
-            stopY: window.toolsItem['stopY'],
-            width: width,
-            profitHeight: height,
-            stopHeight: window.toolsItem['stopHeight'],
-            side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
-        };
-        window.toolItemList.push(toolAndButtonInfo);
-        draw(ctx1, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
-        setupEventListeners(canvasNode1);
-        // 颜色识别当前为空头工具的止损
-    } else if (window.shortToolColor && ctx1.fillStyle === window.shortToolColor.stopColor) {
-        window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
-        originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
-        // 颜色识别当前为空头工具的止盈
-    } else if (window.shortToolColor && ctx1.fillStyle === window.shortToolColor.profitColor && window.toolsItem['stopY']) {
-        window.toolsItem['profitY'] = y;
-        originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
-        let toolAndButtonInfo = {
-            x: x,
-            profitY: y,
-            stopY: window.toolsItem['stopY'],
-            width: width,
-            profitHeight: height,
-            stopHeight: window.toolsItem['stopHeight'],
-            side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
-        };
-        window.toolItemList.push(toolAndButtonInfo);
-        draw(ctx1, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
-        setupEventListeners(canvasNode1);
-    } else {
-        originalFillRect1.call(this, x, y, width, height);
+    if (newValueToolsButtonWidth !== lastValueToolsButtonWidth) {
+        // toolsButtonWidth改变，就改变defaultWidth的值
+        defaultWidth = JSON.parse(newValueToolsButtonWidth).value;
+        defaultHeight = defaultWidth / 2;
+        lastValueToolsButtonWidth = newValueToolsButtonWidth;
     }
-};
-
-// 覆盖 fillRect 方法
-ctx2.fillRect = function (x, y, width, height) {
-    if (x === 0 && y === 0) {
-        // 记录工具列表
-        window.toolItemList = [];
-    }
-    // 颜色识别当前为多头工具的止损
-    if (window.longToolColor && ctx2.fillStyle === window.longToolColor.stopColor) {
-        window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
-        originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
-        // 颜色识别当前为多头工具的止盈
-    } else if (window.longToolColor && ctx2.fillStyle === window.longToolColor.profitColor && window.toolsItem['stopY']) {
-        window.toolsItem['profitY'] = y;                    // 记录止盈的绘图位置
-        originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
-        let toolAndButtonInfo = {
-            x: x,
-            profitY: y,
-            stopY: window.toolsItem['stopY'],
-            width: width,
-            profitHeight: height,
-            stopHeight: window.toolsItem['stopHeight'],
-            side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
-        };
-        window.toolItemList.push(toolAndButtonInfo);
-        draw(ctx2, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
-        setupEventListeners(canvasNode2);
-        // 颜色识别当前为空头工具的止损
-    } else if (window.shortToolColor && ctx2.fillStyle === window.shortToolColor.stopColor) {
-        window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
-        originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
-        // 颜色识别当前为空头工具的止盈
-    } else if (window.shortToolColor && ctx2.fillStyle === window.shortToolColor.profitColor && window.toolsItem['stopY']) {
-        window.toolsItem['profitY'] = y;
-        originalFillRect1.call(this, x, y, width, height);  // 调用原始的 fillRect 方法
-        let toolAndButtonInfo = {
-            x: x,
-            profitY: y,
-            stopY: window.toolsItem['stopY'],
-            width: width,
-            profitHeight: height,
-            stopHeight: window.toolsItem['stopHeight'],
-            side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
-        };
-        window.toolItemList.push(toolAndButtonInfo);
-        draw(ctx2, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
-        setupEventListeners(canvasNode2);
-    } else {
-        originalFillRect1.call(this, x, y, width, height);
-    }
-};
-
-// 保存原始的 fillText 方法
-const timeAxiscanvasNode2 = document.getElementsByClassName('chart-markup-table time-axis')[0].children[0].children[1];
-const timeAxisctx2 = timeAxiscanvasNode2.getContext('2d');
-const originalTimeAxisFillText2 = timeAxisctx2.fillText;
-
-
-// 重写 fillText 方法
-timeAxisctx2.fillText = function (text, x, y, maxWidth) {
-    // 在这里可以执行你自己的逻辑，例如打印出文本或修改它
-    // console.log("Hooked fillText(2):", text, x, y, maxWidth);
-    let date = text.split('   ')[0];
-    let firstSpaceIndex = date.indexOf(' ');
-    date = date.substring(firstSpaceIndex + 1);
-    let time = text.split('   ')[1];
-    let timeZone = parseInt(document.getElementsByClassName('inline-BXXUwft2')[0].children[0].children[0].children[0].innerHTML.match(/\(UTC([+-]\d{1,2})\)/)[1])
-    window.currentCursorTimestamp = parseDateStringWithOffset(date, time, timeZone);
-    // console.log(new Date(window.currentCursorTimestamp));
-    // 调用原始的 fillText 方法
-    originalTimeAxisFillText2.call(this, text, x, y, maxWidth);
-};
-
-// 保存原始的 fillText 方法
-const priceAxiscanvasNode2 = document.getElementsByClassName('price-axis')[0].children[1];
-const priceAxisctx2 = priceAxiscanvasNode2.getContext('2d');
-const originalPriceAxisFillText2 = priceAxisctx2.fillText;
-
-
-// 重写 fillText 方法
-priceAxisctx2.fillText = function (text, x, y, maxWidth) {
-    // 在这里可以执行你自己的逻辑，例如打印出文本或修改它
-    // console.log("Hooked fillText(2):", text, x, y, maxWidth);
-    window.currentCursorPrice = parseFloat(text.replace(/,/g, ''));
-    // 调用原始的 fillText 方法
-    originalPriceAxisFillText2.call(this, text, x, y, maxWidth);
-};
-
-// 还原 fillText 方法
-// timeAxisctx2.fillText = originalAxisFillText2;
-// window.Date = originalDate;
-
-// // 还原 fillRect 方法
-// ctx1.fillRect = originalFillRect1;
-// ctx2.fillRect = originalFillRect2;
-
-
-//# sourceURL=snippet:///canvasHook
+}, 500); // 每秒检查一次

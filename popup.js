@@ -58,5 +58,23 @@ function sendMessage2Background(key, value) {
         sendMessage2Background('toolsButton', toolsButtonCheckBox.checked);
         // console.log(toolsButtonCheckBox.checked);
     });
+
+    // 设置按钮宽度
+    const toolsButton = document.getElementById('toolsButtonWidth');
+    let toolsButtonWidthCache = getCache('toolsButtonWidth');
+    if (toolsButtonWidthCache !== null) {
+        toolsButton.value = toolsButtonWidthCache+'';
+        sendMessage2Background('toolsButtonWidth', parseInt(toolsButton.value));
+    } else {
+        setCache('toolsButtonWidth', toolsButton.value);
+        sendMessage2Background('toolsButtonWidth', parseInt(toolsButton.value));
+    }
+    // 为 toolsButton 添加 change 事件监听器
+    toolsButton.addEventListener('change', function () {
+        setCache('toolsButtonWidth', parseInt(toolsButton.value));
+        sendMessage2Background('toolsButtonWidth', parseInt(toolsButton.value));
+        // console.log(toolsButton.style.width.replace('px', ''));
+    });
+
 })();
 

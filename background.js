@@ -1,4 +1,4 @@
-let checkBoxIDList = ['adsBlock', 'toolsButton']
+let checkBoxIDList = ['adsBlock', 'toolsButton', 'toolsButtonWidth']
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.key && checkBoxIDList.includes(request.key)) {

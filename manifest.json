@@ -11,7 +11,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "fetchHook.js"
+        "fetchHook.js",
+        "canvasHook.js"
       ],
       "matches": [
         "<all_urls>"

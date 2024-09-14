@@ -96,13 +96,7 @@ window.fetch = function (...args) {
                     break;
                 }
             }
-            return originalFetch.apply(this, arguments).then(response => {
-                // 克隆 response，以便后续处理
-                const responseClone = response.clone();
-
-                fetchAndReadStream(responseClone);
-                return response;  // 返回原始的 response 对象，便于后续处理
-            });
+            return originalFetch.apply(this, arguments);
         }
         if (args[1].method !== 'PUT' && args[1].method !== 'GET')
             return originalFetch.apply(this, arguments);
