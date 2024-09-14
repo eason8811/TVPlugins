@@ -30,27 +30,33 @@ function sendMessage2Background(key, value) {
     let toolsButtonCheckBoxCache = getCache('toolsButton');
 
     // 开启广告拦截checkBox
-    if (adsBlockCheckBoxCache !== null){
+    if (adsBlockCheckBoxCache !== null) {
         adsBlockCheckBox.checked = adsBlockCheckBoxCache;
+        sendMessage2Background('adsBlock', adsBlockCheckBox.checked);
+    } else {
+        setCache('adsBlock', adsBlockCheckBox.checked);
         sendMessage2Background('adsBlock', adsBlockCheckBox.checked);
     }
     // 为 checkbox 添加 change 事件监听器
     adsBlockCheckBox.addEventListener('change', function () {
         setCache('adsBlock', adsBlockCheckBox.checked);
         sendMessage2Background('adsBlock', adsBlockCheckBox.checked);
-        console.log(adsBlockCheckBox.checked);
+        // console.log(adsBlockCheckBox.checked);
     });
 
     // 开启下单按钮checkBox
-    if (toolsButtonCheckBoxCache !== null){
+    if (toolsButtonCheckBoxCache !== null) {
         toolsButtonCheckBox.checked = toolsButtonCheckBoxCache;
+        sendMessage2Background('toolsButton', toolsButtonCheckBox.checked);
+    } else {
+        setCache('toolsButton', adsBlockCheckBox.checked);
         sendMessage2Background('toolsButton', toolsButtonCheckBox.checked);
     }
     // 为 checkbox 添加 change 事件监听器
     toolsButtonCheckBox.addEventListener('change', function () {
         setCache('toolsButton', toolsButtonCheckBox.checked);
         sendMessage2Background('toolsButton', toolsButtonCheckBox.checked);
-        console.log(toolsButtonCheckBox.checked);
+        // console.log(toolsButtonCheckBox.checked);
     });
 })();
 
