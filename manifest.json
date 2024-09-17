@@ -31,7 +31,7 @@
     {
       "matches": [
         "https://cn.tradingview.com/*",
-        "https://tradingview.com/*"
+        "https://www.tradingview.com/*"
       ],
       "js": [
         "content.js"

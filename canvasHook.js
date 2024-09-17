@@ -17,6 +17,9 @@ const priceAxiscanvasNode2 = document.getElementsByClassName('price-axis')[0].ch
 const priceAxisctx2 = priceAxiscanvasNode2.getContext('2d');
 const originalPriceAxisFillText2 = priceAxisctx2.fillText;
 
+// 保存原始的 WebSocket 构造函数
+const OriginalWebSocket = window.WebSocket;
+
 window.toolsItem = {
     profitY: null,
     stopY: null,
@@ -27,7 +30,8 @@ window.currentToolIndex = -1;
 let defaultWidth = getCache('toolsButtonWidth') ? getCache('toolsButtonWidth') : 75;
 let defaultHeight = defaultWidth / 2;
 let defaultRadius = 10;
-let originCursor = canvasNode1.style.cursor
+let originCursor = canvasNode1.style.cursor;    // 原来的鼠标样式
+let drawList = [];
 
 let enterButton = null;
 
@@ -169,19 +173,8 @@ function draw(ctx, x, y, width, height, radius, toolAndButtonInfo) {
     ctx.fillStyle = isLong ? window.longToolColor !== null ? window.longToolColor['profitColor'] : window.shortToolColor !== null ? window.shortToolColor['profitColor'] : '#ffffff' : window.shortToolColor !== null ? window.shortToolColor['profitColor'] : '#ffffff';
     ctx.fillStyle = rgbaToHex(ctx.fillStyle);
 
-    // 将toolItemList排序后，获取当前组件的索引
-    let buttonColorControl;
-    let toolItemIndex = getToolItemIndex(x, y);
-    let buttonList = Object.values(window.buttonList);
-
-    if (window.currentToolIndex === -1 || window.toolItemList.length < window.currentToolIndex || window.currentToolIndex === buttonList.length - 1) {
-        buttonColorControl = buttonList[toolItemIndex + 1] !== undefined ? buttonList[toolItemIndex].opened : false;
-    } else if (toolItemIndex < buttonList.length - 1) {
-        buttonColorControl = buttonList[toolItemIndex + 1] !== undefined ? buttonList[toolItemIndex + 1].opened : false;
-    } else {
-        buttonColorControl = buttonList[toolItemIndex + 1] !== undefined ? buttonList[window.currentToolIndex].opened : false;
-    }
-
+    // 当当前绘画的时最后一个组件时，检测最后一个组件的索引
+    let buttonColorControl = false;
 
     if (buttonColorControl) {
         ctx.fillStyle = 'rgba(96, 100, 111, 1)';
@@ -277,7 +270,6 @@ function mouseMoveEvent(event) {
         window.currentToolIndex = -1;
     // console.log(window.currentToolIndex);
 
-
     let mouseInStyle = ['pointer', 'not-allowed'];
     originCursor = mouseInStyle.includes(this.style.cursor) ? originCursor : this.style.cursor;
 
@@ -318,12 +310,17 @@ function setupEventListeners(canvas) {
 }
 
 function hooks() {
+    setupEventListeners(canvasNode1);
+    setupEventListeners(canvasNode2);
     // 覆盖 fillRect 方法
     ctx1.fillRect = function (x, y, width, height) {
         if (x === 0 && y === 0) {
             // 记录工具列表
             window.toolItemList = [];
+            drawList = [];
         }
+
+        drawList.push([x, y, width, height]);
 
         // 颜色识别当前为多头工具的止损
         if (window.longToolColor && ctx1.fillStyle === window.longToolColor.stopColor) {
@@ -344,8 +341,8 @@ function hooks() {
                 side: window.toolsItem['stopY'] >= y ? 'long' : 'short',
             };
             window.toolItemList.push(toolAndButtonInfo);
+            // console.log(x, y, width, height);
             draw(ctx1, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
-            setupEventListeners(canvasNode1);
             // 颜色识别当前为空头工具的止损
         } else if (window.shortToolColor && ctx1.fillStyle === window.shortToolColor.stopColor) {
             window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
@@ -365,7 +362,6 @@ function hooks() {
             };
             window.toolItemList.push(toolAndButtonInfo);
             draw(ctx1, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
-            setupEventListeners(canvasNode1);
         } else {
             originalFillRect1.call(this, x, y, width, height);
         }
@@ -396,7 +392,6 @@ function hooks() {
             };
             window.toolItemList.push(toolAndButtonInfo);
             draw(ctx2, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
-            setupEventListeners(canvasNode2);
             // 颜色识别当前为空头工具的止损
         } else if (window.shortToolColor && ctx2.fillStyle === window.shortToolColor.stopColor) {
             window.toolsItem['stopY'] = y;                      // 记录止损的绘图位置
@@ -416,7 +411,6 @@ function hooks() {
             };
             window.toolItemList.push(toolAndButtonInfo);
             draw(ctx2, x, y, width, height, defaultRadius, toolAndButtonInfo);        // 绘制下单按钮
-            setupEventListeners(canvasNode2);
         } else {
             originalFillRect2.call(this, x, y, width, height);
         }
@@ -461,6 +455,13 @@ setInterval(function () {
     const newValueToolsButton = localStorage.getItem('toolsButton');
     const newValueToolsButtonWidth = localStorage.getItem('toolsButtonWidth');
 
+    if (newValueToolsButtonWidth !== lastValueToolsButtonWidth) {
+        // toolsButtonWidth改变，就改变defaultWidth的值
+        defaultWidth = JSON.parse(newValueToolsButtonWidth).value;
+        defaultHeight = defaultWidth / 2;
+        lastValueToolsButtonWidth = newValueToolsButtonWidth;
+    }
+
     if (newValueToolsButton !== lastValueToolsButton) {
         // toolsButton开启，就hook函数
         if (JSON.parse(newValueToolsButton).value) {
@@ -473,10 +474,4 @@ setInterval(function () {
         lastValueToolsButton = newValueToolsButton;
     }
 
-    if (newValueToolsButtonWidth !== lastValueToolsButtonWidth) {
-        // toolsButtonWidth改变，就改变defaultWidth的值
-        defaultWidth = JSON.parse(newValueToolsButtonWidth).value;
-        defaultHeight = defaultWidth / 2;
-        lastValueToolsButtonWidth = newValueToolsButtonWidth;
-    }
 }, 500); // 每秒检查一次
