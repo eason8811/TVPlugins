@@ -13,18 +13,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-chrome.webRequest.onBeforeRequest.addListener(
-    function (details) {
-        if (details.url.includes('20162.')) {
-            // const newUrl = chrome.runtime.getURL('modified_script.js'); // 指向你的替代脚本
-            console.log(details.url);
-            return {redirectUrl: details.url};
-        }
-    },
-    {urls: ["<all_urls>"]},
-    ["blocking"]
-);
-
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.declarativeNetRequest.updateDynamicRules({
+    addRules: [{
+      id: 1,
+      priority: 1,
+      action: { type: "modifyHeaders", responseHeaders: [{ header: "X-Intercepted", operation: "set", value: "true" }] },
+      condition: {
+        urlFilter: "*://static.tradingview.com/static/bundles/20162.*.js",
+        resourceTypes: ["script"]
+      }
+    }],
+    removeRuleIds: [1]
+  });
+});
 
 // // 将参数对象转换为查询字符串的函数
 // function param2string(param) {
