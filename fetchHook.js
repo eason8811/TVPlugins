@@ -57,82 +57,101 @@
 //     return socket;
 // };
 
-(function() {
-    // 使用 Set 跟踪已经处理过的 script 标签
-    const processedScripts = new Set();
+function modifyCode(inputCode, insertStr) {
+    // 正则表达式分为三部分：
+    // 1. for 循环中的变量 i
+    // 2. 该变量与 renderer 函数的关联，确保变量一致
+    // 3. 在 const o = i.renderer(t); 之前插入指定字符串
+    const regex = /for\(const (\w) of (\w)\)\{const (\w)=\1\.renderer\(t\);/;
 
-    const observer = new MutationObserver(function(mutationsList) {
-        for (let mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                if (document.head) {
-                    // 找到 <head> 标签后停止观察整个文档
-                    observer.disconnect();
-
-                    const scriptObserver = new MutationObserver(function(scriptMutations, observer) {
-                        for (let scriptMutation of scriptMutations) {
-                            if (scriptMutation.type === 'childList') {
-                                scriptMutation.addedNodes.forEach(node => {
-                                    if (node.tagName === 'SCRIPT' && /20162\..*\.js/.test(node.src)) {
-                                        // 检查是否已经处理过该 script 标签
-                                        if (!processedScripts.has(node.src)) {
-                                            // 标记该 script 已经处理过
-                                            processedScripts.add(node.src);
-
-                                            let xhr = new XMLHttpRequest();
-                                            xhr.open('GET', node.src, true);
-                                            xhr.onreadystatechange = function() {
-                                                if (xhr.readyState === 4 && xhr.status === 200) {
-                                                    let modifiedScript = xhr.responseText;
-
-                                                    // 在这里添加你自己的逻辑
-                                                    modifiedScript += `\nconsole.log('Custom logic injected with Blob support.');`;
-
-                                                    // 创建一个 Blob 对象，包含修改后的脚本代码
-                                                    const blob = new Blob([modifiedScript], { type: 'application/javascript' });
-
-                                                    // 创建一个 Blob URL 来引用这个 Blob 对象
-                                                    const blobUrl = URL.createObjectURL(blob);
-
-                                                    // 仅在 parentNode 存在时移除原有的 script 标签
-                                                    if (node.parentNode) {
-                                                        node.parentNode.removeChild(node);
-                                                    }
-
-                                                    // 创建一个新的 script 标签，引用 Blob URL
-                                                    const newScript = document.createElement('script');
-                                                    newScript.crossOrigin = 'anonymous';
-                                                    newScript.defer = true;
-                                                    newScript.src = blobUrl;
-
-                                                    // 将新的 script 标签插入页面
-                                                    document.head.appendChild(newScript);
-
-                                                    // 成功替换 script 标签后，断开该观察器
-                                                    observer.disconnect();
-                                                }
-                                            };
-                                            xhr.send();
-                                        }
-                                    }
-                                });
-                            }
-                        }
-                    });
-
-                    // 监听 <head> 中的 script 标签变化
-                    scriptObserver.observe(document.head, { childList: true, subtree: true });
-                }
-            }
-        }
+    // 替换匹配的部分，在 renderer 之前插入 insertStr
+    const modifiedCode = inputCode.replace(regex, function(match, p1, p2, p3) {
+        return `for(const ${p1} of ${p2}){${insertStr}const ${p3}=${p1}.renderer(t);`;
     });
 
-    // 监听整个文档，直到找到 <head> 标签
-    observer.observe(document.documentElement, { childList: true, subtree: true });
-})();
+    return modifiedCode;
+}
 
-
-
-
+// (function () {
+//     // 使用 Set 跟踪已经处理过的 script 标签
+//     const processedScripts = new Set();
+//
+//     const observer = new MutationObserver(function (mutationsList) {
+//         for (let mutation of mutationsList) {
+//             if (mutation.type === 'childList') {
+//                 if (document.head) {
+//                     // 找到 <head> 标签后停止观察整个文档
+//                     observer.disconnect();
+//
+//                     const scriptObserver = new MutationObserver(function (scriptMutations, observer) {
+//                         for (let scriptMutation of scriptMutations) {
+//                             if (scriptMutation.type === 'childList') {
+//                                 scriptMutation.addedNodes.forEach(node => {
+//                                     if (node.tagName === 'SCRIPT' && /20162\..*\.js/.test(node.src)) {
+//                                         // 检查是否已经处理过该 script 标签
+//                                         if (!processedScripts.has(node.src)) {
+//                                             // 标记该 script 已经处理过
+//                                             processedScripts.add(node.src);
+//
+//                                             let xhr = new XMLHttpRequest();
+//                                             xhr.open('GET', node.src, true);
+//                                             xhr.onreadystatechange = function () {
+//                                                 if (xhr.readyState === 4 && xhr.status === 200) {
+//                                                     let modifiedScript = xhr.responseText;
+//
+//                                                     // 在这里添加自己的逻辑
+//                                                     console.log(`已拦截到js加载，src: ${node.src}`);
+//
+//                                                     // 需要插入的新代码
+//                                                     // let newCode = 'window.o_hyj ? window.o_hyj.push(o) : window.o_hyj = [o];';
+//                                                     let newCode = 'console.log("脚本已被hook");debugger;';
+//
+//                                                     modifiedScript = modifyCode(modifiedScript, newCode);
+//                                                     // modifiedScript = 'console.log("脚本已被hook");' + modifiedScript;
+//
+//                                                     // 创建一个 Blob 对象，包含修改后的脚本代码
+//                                                     const blob = new Blob([modifiedScript], {type: 'application/javascript'});
+//
+//                                                     // 创建一个 Blob URL 来引用这个 Blob 对象
+//                                                     const blobUrl = URL.createObjectURL(blob);
+//                                                     console.log(`新src: ${blobUrl}`);
+//
+//                                                     // 仅在 parentNode 存在时移除原有的 script 标签
+//                                                     if (node.parentNode) {
+//                                                         node.parentNode.removeChild(node);
+//                                                     }
+//
+//                                                     // 创建一个新的 script 标签，引用 Blob URL
+//                                                     const newScript = document.createElement('script');
+//                                                     newScript.crossOrigin = 'anonymous';
+//                                                     newScript.defer = true;
+//                                                     newScript.src = blobUrl;
+//
+//                                                     // 将新的 script 标签插入页面
+//                                                     document.head.appendChild(newScript);
+//
+//                                                     // 成功替换 script 标签后，断开该观察器
+//                                                     observer.disconnect();
+//                                                 }
+//                                             };
+//                                             xhr.send();
+//                                         }
+//                                     }
+//                                 });
+//                             }
+//                         }
+//                     });
+//
+//                     // 监听 <head> 中的 script 标签变化
+//                     scriptObserver.observe(document.head, {childList: true, subtree: true});
+//                 }
+//             }
+//         }
+//     });
+//
+//     // 监听整个文档，直到找到 <head> 标签
+//     observer.observe(document.documentElement, {childList: true, subtree: true});
+// })();
 
 
 // Hook window的fetch方法，拦截请求并处理数据，将处理后的多头空头组件信息存在window.buttonList中

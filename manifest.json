@@ -6,7 +6,8 @@
   "permissions": [
     "storage",
     "activeTab",
-    "webRequest"
+    "webRequest",
+    "webRequestBlocking"
   ],
   "web_accessible_resources": [
     {
@@ -15,7 +16,8 @@
         "canvasHook.js"
       ],
       "matches": [
-        "<all_urls>"
+        "https://cn.tradingview.com/*",
+        "https://www.tradingview.com/*"
       ]
     }
   ],

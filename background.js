@@ -11,7 +11,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         });
         sendResponse({response: `${request.key},${request.value} background.js已收到`});  // 返回给 popup.js
     }
-})
+});
+
+chrome.webRequest.onBeforeRequest.addListener(
+    function (details) {
+        if (details.url.includes('20162.')) {
+            // const newUrl = chrome.runtime.getURL('modified_script.js'); // 指向你的替代脚本
+            console.log(details.url);
+            return {redirectUrl: details.url};
+        }
+    },
+    {urls: ["<all_urls>"]},
+    ["blocking"]
+);
 
 
 // // 将参数对象转换为查询字符串的函数
