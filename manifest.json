@@ -7,9 +7,6 @@
     "storage",
     "activeTab",
     "webRequest",
-    "declarativeNetRequest",
-    "declarativeNetRequestWithHostAccess",
-    "declarativeNetRequestFeedback",
     "scripting"
   ],
   "web_accessible_resources": [

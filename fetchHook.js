@@ -65,12 +65,26 @@ function modifyCode(inputCode, insertStr) {
     const regex = /for\(const (\w) of (\w)\)\{const (\w)=\1\.renderer\(t\);/;
 
     // 替换匹配的部分，在 renderer 之前插入 insertStr
-    const modifiedCode = inputCode.replace(regex, function(match, p1, p2, p3) {
+    const modifiedCode = inputCode.replace(regex, function (match, p1, p2, p3) {
         return `for(const ${p1} of ${p2}){${insertStr}const ${p3}=${p1}.renderer(t);`;
     });
 
     return modifiedCode;
 }
+
+window.webpackChunktradingview = window.webpackChunktradingview || [];
+// 保存原始的 push 方法
+const originalPush = self.webpackChunktradingview.push;
+
+// 重写 push 方法
+self.webpackChunktradingview.push = function (...args) {
+    // 监控逻辑：可以在这里打印或者处理要 push 的内容
+    if (args[0][0].includes(20162))
+        console.log('Pushing to webpackChunktradingview:', args[0]);
+
+    // 调用原始的 push 方法，保持原功能
+    return originalPush.apply(this, args);
+};
 
 // Hook window的fetch方法，拦截请求并处理数据，将处理后的多头空头组件信息存在window.buttonList中
 function getDecimalPlaces(num) {

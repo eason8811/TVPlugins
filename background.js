@@ -13,21 +13,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.declarativeNetRequest.updateDynamicRules({
-    addRules: [{
-      id: 1,
-      priority: 1,
-      action: { type: "modifyHeaders", responseHeaders: [{ header: "X-Intercepted", operation: "set", value: "true" }] },
-      condition: {
-        urlFilter: "*://static.tradingview.com/static/bundles/20162.*.js",
-        resourceTypes: ["script"]
-      }
-    }],
-    removeRuleIds: [1]
-  });
-});
-
 // // 将参数对象转换为查询字符串的函数
 // function param2string(param) {
 //     let s = '';
