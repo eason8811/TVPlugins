@@ -79,9 +79,13 @@ const originalPush = self.webpackChunktradingview.push;
 // 重写 push 方法
 self.webpackChunktradingview.push = function (...args) {
     // 监控逻辑：可以在这里打印或者处理要 push 的内容
-    if (args[0][0].includes(20162))
-        console.log('Pushing to webpackChunktradingview:', args[0]);
-
+    for (let moduleId of Object.keys(args[0][1])) {
+        if (args[0][1][moduleId].toString().includes('_drawSourceImpl')) {
+            console.log('Pushing to webpackChunktradingview:', args[0]);
+            console.log('已找到模块: moduleId = ', moduleId, '\n函数:', args[0][1][moduleId]);
+            // debugger;
+        }
+    }
     // 调用原始的 push 方法，保持原功能
     return originalPush.apply(this, args);
 };

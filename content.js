@@ -46,7 +46,6 @@ window.addEventListener('load', function () {
     injectScript('canvasHook.js');
 });
 
-
 if (getCache('adsBlock')) {
     window.addEventListener('load', function () {
         console.log('Page fully loaded');
