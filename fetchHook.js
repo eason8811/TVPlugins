@@ -57,22 +57,25 @@
 //     return socket;
 // };
 
-function modifyCode(inputCode, insertStr) {
-    // 正则表达式分为三部分：
-    // 1. for 循环中的变量 i
-    // 2. 该变量与 renderer 函数的关联，确保变量一致
-    // 3. 在 const o = i.renderer(t); 之前插入指定字符串
-    const regex = /for\(const (\w) of (\w)\)\{const (\w)=\1\.renderer\(t\);/;
+function findScriptTag(id) {
+    const regex = new RegExp(`^https://static.tradingview.com/static/bundles/${id}\\.\\w+\\.js$`);  // 构建正则表达式
 
-    // 替换匹配的部分，在 renderer 之前插入 insertStr
-    const modifiedCode = inputCode.replace(regex, function (match, p1, p2, p3) {
-        return `for(const ${p1} of ${p2}){${insertStr}const ${p3}=${p1}.renderer(t);`;
-    });
+    // 获取所有具有 src 属性的标签，通常是 <script> 标签
+    const scripts = document.querySelectorAll('script[src]');
 
-    return modifiedCode;
+    // 遍历找到匹配的 <script> 标签
+    for (let script of scripts) {
+        const src = script.getAttribute('src');
+        if (regex.test(src)) {
+            return script;  // 找到匹配的标签，返回它
+        }
+    }
+
+    return null;  // 如果没有找到匹配的标签，返回 null
 }
 
 window.webpackChunktradingview = window.webpackChunktradingview || [];
+window.modified = false;
 // 保存原始的 push 方法
 const originalPush = self.webpackChunktradingview.push;
 
@@ -80,9 +83,56 @@ const originalPush = self.webpackChunktradingview.push;
 self.webpackChunktradingview.push = function (...args) {
     // 监控逻辑：可以在这里打印或者处理要 push 的内容
     for (let moduleId of Object.keys(args[0][1])) {
-        if (args[0][1][moduleId].toString().includes('_drawSourceImpl')) {
+        if (args[0][1][moduleId].toString().includes('_drawSourceImpl') && !window.modified) {
             console.log('Pushing to webpackChunktradingview:', args[0]);
-            console.log('已找到模块: moduleId = ', moduleId, '\n函数:', args[0][1][moduleId]);
+            console.log('模块ID:', args[0][0][0]);
+            console.log('已找到模块: module_key = ', moduleId, '\n函数:', args[0][1][moduleId]);
+            let scriptItem = findScriptTag(args[0][0][0]);
+            if (scriptItem) {
+                console.log('已找到对应标签, src为: ', scriptItem.src);
+                fetch(scriptItem.src)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`获取js时发生HTTP错误: ${response.status}`);
+                        }
+                        return response.text();  // 将响应内容作为文本返回
+                    })
+                    .then(scriptContent => {
+                        // console.log('脚本内容: ', scriptContent);  // 打印或处理获取到的 JS 脚本内容
+                        const insertCode = "/* custom insertion */";  // 需要插入的自定义字符串
+
+                        // 正则表达式：匹配 "{const 变量 = 变量.renderer"
+                        const regex = /(\{)(\s*const\s+[a-zA-Z]\s*=\s*[a-zA-Z]\.renderer)/;
+
+                        // 使用正则表达式匹配并插入自定义字符串
+                        const resultScriptContent = scriptContent.replace(regex, `$1${insertCode}$2`);
+                        // 创建一个 Blob 对象并将脚本内容放入其中
+                        const blob = new Blob([resultScriptContent], {type: 'application/javascript'});
+
+                        // 使用 URL.createObjectURL() 生成一个 Blob URL
+                        const blobUrl = URL.createObjectURL(blob);
+
+                        // 创建一个 <script> 标签并设置其 src 属性为 Blob URL
+                        const scriptElement = document.createElement('script');
+                        scriptElement.src = blobUrl;
+
+                        // 将 <script> 标签插入到页面的 <head> 中
+                        document.head.appendChild(scriptElement);
+
+                        // 释放 Blob URL 以防止内存泄漏（当不再需要该脚本时）
+                        scriptElement.onload = () => {
+                            URL.revokeObjectURL(blobUrl);  // 释放资源
+                        };
+                        console.log('脚本src: ', scriptElement.src);
+                        console.log(scriptElement);
+                    })
+                    .catch(error => {
+                        console.error('获取js失败:', error);
+                    });
+                window.modified = true;
+                return originalPush.apply(this, []);
+            } else
+                console.log('未找到标签！');
             // debugger;
         }
     }
