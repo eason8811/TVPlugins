@@ -57,88 +57,80 @@
 //     return socket;
 // };
 
-function findScriptTag(id) {
-    const regex = new RegExp(`^https://static.tradingview.com/static/bundles/${id}\\.\\w+\\.js$`);  // 构建正则表达式
+// 创建一个用于加载脚本的异步函数
+function loadScript(result) {
+    return new Promise((resolve, reject) => {
+        const blob = new Blob([result], {type: 'application/javascript'});
+        const blobURL = URL.createObjectURL(blob);
+        const scriptElement = document.createElement('script');
+        scriptElement.src = blobURL;
 
-    // 获取所有具有 src 属性的标签，通常是 <script> 标签
-    const scripts = document.querySelectorAll('script[src]');
-
-    // 遍历找到匹配的 <script> 标签
-    for (let script of scripts) {
-        const src = script.getAttribute('src');
-        if (regex.test(src)) {
-            return script;  // 找到匹配的标签，返回它
-        }
-    }
-
-    return null;  // 如果没有找到匹配的标签，返回 null
+        // 当脚本加载完成时，触发 onload 回调
+        scriptElement.onload = function () {
+            console.log("window.targetModuleFunction已生成");
+            resolve();  // 脚本加载完成，resolve Promise
+        };
+        document.head.appendChild(scriptElement);
+        URL.revokeObjectURL(blobURL);
+    });
 }
 
 window.webpackChunktradingview = window.webpackChunktradingview || [];
-window.modified = false;
+window.rebound = false;
 // 保存原始的 push 方法
 const originalPush = self.webpackChunktradingview.push;
 
 // 重写 push 方法
 self.webpackChunktradingview.push = function (...args) {
-    // 监控逻辑：可以在这里打印或者处理要 push 的内容
-    for (let moduleId of Object.keys(args[0][1])) {
-        if (args[0][1][moduleId].toString().includes('_drawSourceImpl') && !window.modified) {
-            console.log('Pushing to webpackChunktradingview:', args[0]);
-            console.log('模块ID:', args[0][0][0]);
-            console.log('已找到模块: module_key = ', moduleId, '\n函数:', args[0][1][moduleId]);
-            let scriptItem = findScriptTag(args[0][0][0]);
-            if (scriptItem) {
-                console.log('已找到对应标签, src为: ', scriptItem.src);
-                fetch(scriptItem.src)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`获取js时发生HTTP错误: ${response.status}`);
+    if (!window.rebound) {
+        let originalPush2 = self.webpackChunktradingview.push;
+        self.webpackChunktradingview.push = async function (...args2) {
+            // 定义正则表达式来匹配形如 ){const o=i.renderer( 的字符串
+            const pattern = /\)\{\s*const\s+[a-zA-Z]\s*=\s*[a-zA-Z]\.renderer\s*\(/;
+            let myCode = 'const toolItemDrawEvent=new CustomEvent(\'toolItemDraw\',{detail:{originObj:o,rendererObj:r,bitMediaInfo:t}});document.dispatchEvent(toolItemDrawEvent);';
+            for (let moduleId of Object.keys(args2[0][1])) {
+                if (pattern.test(args2[0][1][moduleId].toString())) {
+                    const insertPattern = /(,\s*this\.state\(\)\);)(\s*if\()/;
+                    // 识别 ,this.state()); 和 if( 并在其中间添加myCode
+
+                    let scriptArray = args2[0][1][moduleId].toString().split(',this.state());if(');
+                    for (let i = 0; i < scriptArray.length; i++) {
+                        if (i !== 0) {
+                            scriptArray[i] = ',this.state());if(' + scriptArray[i];
                         }
-                        return response.text();  // 将响应内容作为文本返回
-                    })
-                    .then(scriptContent => {
-                        // console.log('脚本内容: ', scriptContent);  // 打印或处理获取到的 JS 脚本内容
-                        const insertCode = "/* custom insertion */";  // 需要插入的自定义字符串
+                        scriptArray[i] = scriptArray[i].replace(insertPattern, (match, part1, part2) => {
+                            return `${part1}${myCode}${part2}`;  // 在 this.state()); 后插入 myCode
+                        });
+                    }
+                    let result = '';
+                    for (let j = 0; j < scriptArray.length; j++) {
+                        result += scriptArray[j];
+                    }
+                    result = 'window.targetModuleFunction=' + result + ';';
 
-                        // 正则表达式：匹配 "{const 变量 = 变量.renderer"
-                        const regex = /(\{)(\s*const\s+[a-zA-Z]\s*=\s*[a-zA-Z]\.renderer)/;
-
-                        // 使用正则表达式匹配并插入自定义字符串
-                        const resultScriptContent = scriptContent.replace(regex, `$1${insertCode}$2`);
-                        // 创建一个 Blob 对象并将脚本内容放入其中
-                        const blob = new Blob([resultScriptContent], {type: 'application/javascript'});
-
-                        // 使用 URL.createObjectURL() 生成一个 Blob URL
-                        const blobUrl = URL.createObjectURL(blob);
-
-                        // 创建一个 <script> 标签并设置其 src 属性为 Blob URL
-                        const scriptElement = document.createElement('script');
-                        scriptElement.src = blobUrl;
-
-                        // 将 <script> 标签插入到页面的 <head> 中
-                        document.head.appendChild(scriptElement);
-
-                        // 释放 Blob URL 以防止内存泄漏（当不再需要该脚本时）
-                        scriptElement.onload = () => {
-                            URL.revokeObjectURL(blobUrl);  // 释放资源
-                        };
-                        console.log('脚本src: ', scriptElement.src);
-                        console.log(scriptElement);
-                    })
-                    .catch(error => {
-                        console.error('获取js失败:', error);
-                    });
-                window.modified = true;
-                return originalPush.apply(this, []);
-            } else
-                console.log('未找到标签！');
-            // debugger;
+                    // 加载脚本并等待其完成
+                    await loadScript(result);
+                    // 等待脚本加载完成后，将 window.targetModuleFunction 替换到 args2 中
+                    if (window.targetModuleFunction) {
+                        console.log('替换修改后的模块');
+                        args2[0][1][moduleId] = window.targetModuleFunction;  // 替换 args2 的值
+                    }
+                }
+            }
+            return originalPush2.apply(this, args2);
         }
+        window.rebound = true;
     }
     // 调用原始的 push 方法，保持原功能
     return originalPush.apply(this, args);
 };
+
+// 添加组件被绘画的事件监听器
+document.addEventListener('toolItemDraw', (event) => {
+    if (event.detail.originObj.toolname && event.detail.originObj.toolname.includes('LineToolRiskReward') && event.detail.rendererObj) {
+        console.log(event.detail);
+    }
+});
 
 // Hook window的fetch方法，拦截请求并处理数据，将处理后的多头空头组件信息存在window.buttonList中
 function getDecimalPlaces(num) {
