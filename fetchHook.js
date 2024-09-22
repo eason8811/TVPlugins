@@ -129,6 +129,16 @@ self.webpackChunktradingview.push = function (...args) {
 document.addEventListener('toolItemDraw', (event) => {
     if (event.detail.originObj.toolname && event.detail.originObj.toolname.includes('LineToolRiskReward') && event.detail.rendererObj) {
         console.log(event.detail);
+        let horizontalPixelRatio = event.detail.bitMediaInfo._bitmapSize.width / event.detail.bitMediaInfo._mediaSize.width;
+        let verticalPixelRatio = event.detail.bitMediaInfo._bitmapSize.height / event.detail.bitMediaInfo._mediaSize.height;
+        let profitRenderer = event.detail.rendererObj[0]._fullTargetBgRenderer;
+        let stopRenderer = event.detail.rendererObj[0]._fullStopBgRenderer;
+        let entryLineRenderer = event.detail.rendererObj[0]._entryLineRenderer;
+        let profitTextColor = profitRenderer.color;
+        let profitBgColor = profitRenderer.backcolor;
+        let stopTextColor = stopRenderer.color;
+        let stopBgColor = stopRenderer.backcolor;
+
     }
 });
 
