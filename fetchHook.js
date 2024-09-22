@@ -87,7 +87,7 @@ self.webpackChunktradingview.push = function (...args) {
         self.webpackChunktradingview.push = async function (...args2) {
             // 定义正则表达式来匹配形如 ){const o=i.renderer( 的字符串
             const pattern = /\)\{\s*const\s+[a-zA-Z]\s*=\s*[a-zA-Z]\.renderer\s*\(/;
-            let myCode = 'const toolItemDrawEvent=new CustomEvent(\'toolItemDraw\',{detail:{originObj:o,rendererObj:r,bitMediaInfo:t}});document.dispatchEvent(toolItemDrawEvent);';
+            let myCode = 'const toolItemDrawEvent=new CustomEvent(\'toolItemDraw\',{detail:{originObj:o,rendererObj:r,bitMediaInfo:t,ctx:e}});document.dispatchEvent(toolItemDrawEvent);';
             for (let moduleId of Object.keys(args2[0][1])) {
                 if (pattern.test(args2[0][1][moduleId].toString())) {
                     const insertPattern = /(,\s*this\.state\(\)\);)(\s*if\()/;
@@ -125,20 +125,125 @@ self.webpackChunktradingview.push = function (...args) {
     return originalPush.apply(this, args);
 };
 
+function minMaxBox(t, n) {
+    // t = {x: 0, y: 0}
+    // n = {x: mediaWidth, y: mediaHeight}
+    return {
+        min: {x: Math.min(t.x, n.x), y: Math.min(t.y, n.y)},
+        max: {x: Math.max(t.x, n.x), y: Math.max(t.y, n.y)}
+    }
+}
+
+function transformPoints(t, n) {
+    // 输入：t = renderer中的数据点
+    //      n = mediaSize中的数据点经过min，max处理过的对象
+    var e = t[0].x
+        , r = t[0].y
+        , u = t[1].x
+        , o = t[1].y
+        , a = n.min.x
+        , s = n.min.y
+        , l = n.max.x
+        , f = n.max.y;
+
+    function c(t, n, e, r, i, u) {
+        var o = 0;
+        return t < e ? o |= 1 : t > i && (o |= 2),
+            n < r ? o |= 4 : n > u && (o |= 8),
+            o
+    }
+
+    for (var d = c(e, r, a, s, l, f), h = c(u, o, a, s, l, f), v = !1, p = 0; ;) {
+        if (p > 1e3)
+            throw new Error("Cohen - Sutherland algorithm: infinity loop");
+        if (p++,
+            !(d | h)) {
+            v = !0;
+            break
+        }
+        if (d & h)
+            break;
+        var y = d || h
+            , g = void 0
+            , x = void 0;
+        8 & y ? (g = e + (u - e) * (f - r) / (o - r),
+            x = f) : 4 & y ? (g = e + (u - e) * (s - r) / (o - r),
+            x = s) : 2 & y ? (x = r + (o - r) * (l - e) / (u - e),
+            g = l) : (x = r + (o - r) * (a - e) / (u - e),
+            g = a),
+            y === d ? d = c(e = g, r = x, a, s, l, f) : h = c(u = g, o = x, a, s, l, f)
+    }
+    return v ? e === u && r === o ? {x: e, y: r} : (() => {
+        if (e !== u || r !== o)
+            return [{x: e, y: r}, {x: u, y: o}];
+        else throw new Error("Points of a segment should be distinct");
+    })() : null;
+}
+
+function drawEnter(e, t, i, r, n, s) {
+    // e: ctx
+    // t: point[0].x
+    // i: point[0].y
+    // r: point[1].x
+    // n: point[1].y
+    // s: {horizontalPixelRatio: o, verticalPixelRatio: l}
+    function h(e, t, i, r) {
+        const n = e.lineWidth % 2 ? .5 : 0;
+        return {
+            startPoint: {x: i, y: t + n},
+            endPoint: {x: r, y: t + n}
+        };
+    }
+
+    function p(e, t, i, r) {
+        const n = e.lineWidth % 2 ? .5 : 0;
+        return {
+            startPoint: {x: t + n, y: i},
+            endPoint: {x: t + n, y: r}
+        };
+    }
+
+    function T(e, t, i, r, n) {
+        return {
+            startPoint: {x: t, y: i},
+            endPoint: {x: r, y: n}
+        };
+    }
+
+    const {horizontalPixelRatio: o, verticalPixelRatio: l} = s;
+    return t === r ? p(e, Math.round(t * o), i * l, n * l) : i === n ? h(e, Math.round(i * l), t * o, r * o) : T(e, t * o, i * l, r * o, n * l);
+}
+
 // 添加组件被绘画的事件监听器
 document.addEventListener('toolItemDraw', (event) => {
     if (event.detail.originObj.toolname && event.detail.originObj.toolname.includes('LineToolRiskReward') && event.detail.rendererObj) {
         console.log(event.detail);
-        let horizontalPixelRatio = event.detail.bitMediaInfo._bitmapSize.width / event.detail.bitMediaInfo._mediaSize.width;
-        let verticalPixelRatio = event.detail.bitMediaInfo._bitmapSize.height / event.detail.bitMediaInfo._mediaSize.height;
+        let horizontalPixelRatio = event.detail.bitMediaInfo.bitmapSize.width / event.detail.bitMediaInfo.mediaSize.width;
+        let verticalPixelRatio = event.detail.bitMediaInfo.bitmapSize.height / event.detail.bitMediaInfo.mediaSize.height;
         let profitRenderer = event.detail.rendererObj[0]._fullTargetBgRenderer;
         let stopRenderer = event.detail.rendererObj[0]._fullStopBgRenderer;
         let entryLineRenderer = event.detail.rendererObj[0]._entryLineRenderer;
+        let ctx = event.detail.ctx;
         let profitTextColor = profitRenderer.color;
         let profitBgColor = profitRenderer.backcolor;
         let stopTextColor = stopRenderer.color;
         let stopBgColor = stopRenderer.backcolor;
 
+        let minMaxBoxObj = minMaxBox(
+            {x: 0, y: 0},
+            {x: event.detail.bitMediaInfo.mediaSize.width, y: event.detail.bitMediaInfo.mediaSize.height}
+        )
+        let transformedPoints = transformPoints(entryLineRenderer._data.points, minMaxBoxObj);
+        if (transformedPoints) {
+            let pointsOnCanvas = drawEnter(ctx,
+                transformedPoints[0].x, transformedPoints[0].y, transformedPoints[1].x, transformedPoints[1].y,
+                {horizontalPixelRatio: horizontalPixelRatio, verticalPixelRatio: verticalPixelRatio});
+            console.log(pointsOnCanvas);
+            ctx.save();
+            ctx.fillStyle = 'white';
+            ctx.fillRect(pointsOnCanvas.endPoint.x, pointsOnCanvas.endPoint.y, 20, 20);
+            ctx.restore();
+        }
     }
 });
 
