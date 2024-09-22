@@ -87,7 +87,7 @@ self.webpackChunktradingview.push = function (...args) {
         self.webpackChunktradingview.push = async function (...args2) {
             // 定义正则表达式来匹配形如 ){const o=i.renderer( 的字符串
             const pattern = /\)\{\s*const\s+[a-zA-Z]\s*=\s*[a-zA-Z]\.renderer\s*\(/;
-            let myCode = 'const toolItemDrawEvent=new CustomEvent(\'toolItemDraw\',{detail:{originObj:o,rendererObj:r,bitMediaInfo:t}});document.dispatchEvent(toolItemDrawEvent);';
+            let myCode = 'const toolItemDrawEvent=new CustomEvent(\'toolItemDraw\',{detail:{originObj:o,bitMediaInfo:t}});document.dispatchEvent(toolItemDrawEvent);';
             for (let moduleId of Object.keys(args2[0][1])) {
                 if (pattern.test(args2[0][1][moduleId].toString())) {
                     const insertPattern = /(,\s*this\.state\(\)\);)(\s*if\()/;
@@ -127,7 +127,7 @@ self.webpackChunktradingview.push = function (...args) {
 
 // 添加组件被绘画的事件监听器
 document.addEventListener('toolItemDraw', (event) => {
-    if (event.detail.originObj.toolname && event.detail.originObj.toolname.includes('LineToolRiskReward') && event.detail.rendererObj) {
+    if (event.detail.originObj.toolname && event.detail.originObj.toolname.includes('LineToolRiskReward')) {
         console.log(event.detail);
     }
 });
