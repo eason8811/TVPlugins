@@ -214,6 +214,135 @@ function drawEnter(e, t, i, r, n, s) {
     return t === r ? p(e, Math.round(t * o), i * l, n * l) : i === n ? h(e, Math.round(i * l), t * o, r * o) : T(e, t * o, i * l, r * o, n * l);
 }
 
+let defaultWidth = getCache('toolsButtonWidth') ? getCache('toolsButtonWidth') : 75;
+let defaultHeight = defaultWidth / 2;
+let defaultRadius = 10;
+
+// let originCursor = canvasNode1.style.cursor;    // 原来的鼠标样式
+
+function getCache(key) {
+    let cacheObj = JSON.parse(localStorage.getItem(key));
+    if (cacheObj) {
+        return cacheObj.value;
+    }
+    return null;
+}
+
+function rgbaToHex(rgba) {
+    // 提取 r, g, b, a 值
+    const parts = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*(\d*\.?\d+)?\)/);
+
+    if (!parts) {
+        return rgba;
+
+    }
+
+    const r = parseInt(parts[1], 10);
+    const g = parseInt(parts[2], 10);
+    const b = parseInt(parts[3], 10);
+    // const a = parseFloat(parts[4] || 1); // 透明度值，默认是1
+
+    // 将 r, g, b 转换为 16 进制并拼接
+    const hex = (
+        (1 << 24) +
+        (r << 16) +
+        (g << 8) +
+        b
+    ).toString(16).slice(1).toUpperCase();
+
+    return `#${hex}`;
+}
+
+function drawButton(ctx, x, y, radius, profitTextColor, profitBgColor, stopTextColor, stopBgColor) {
+    // x: 横坐标, y: 纵坐标, width: 宽度, height: 高度, radius: 圆角半径
+    // 绘制下单按钮
+    enterButton = {
+        height: defaultHeight,
+        width: defaultWidth,
+        opened: false,
+    };
+    ctx.save();
+
+    let buttonX = x;
+    let buttonY = y - enterButton.height / 2;
+
+    enterButton.buttonX = buttonX;
+    enterButton.buttonY = buttonY;
+
+    // 绘制左半部分（绿色），中间无圆角
+    ctx.beginPath();
+    ctx.moveTo(buttonX + radius, buttonY);  // 左上角
+    ctx.lineTo(buttonX + enterButton.width / 2, buttonY);  // 上边中点
+    ctx.lineTo(buttonX + enterButton.width / 2, buttonY + enterButton.height);  // 下边中点
+    ctx.lineTo(buttonX + radius, buttonY + enterButton.height);  // 左下角
+    ctx.arcTo(buttonX, buttonY + enterButton.height, buttonX, buttonY + enterButton.height - radius, radius);  // 左下角圆角
+    ctx.lineTo(buttonX, buttonY + radius);  // 左边
+    ctx.arcTo(buttonX, buttonY, buttonX + radius, buttonY, radius);  // 左上角圆角
+    ctx.closePath();
+    ctx.fillStyle = profitBgColor;
+    ctx.fillStyle = rgbaToHex(ctx.fillStyle);
+
+    // 当当前绘画的时最后一个组件时，检测最后一个组件的索引
+    let buttonColorControl = false;
+
+    if (buttonColorControl) {
+        ctx.fillStyle = 'rgba(96, 100, 111, 1)';
+    }
+    ctx.fill();
+    ctx.strokeStyle = profitTextColor;
+    ctx.strokeStyle = rgbaToHex(ctx.strokeStyle);
+    ctx.stroke();
+
+    // 绘制右半部分（红色），中间无圆角
+    ctx.beginPath();
+    ctx.moveTo(buttonX + enterButton.width / 2, buttonY);  // 上边中点
+    ctx.lineTo(buttonX + enterButton.width - radius, buttonY);  // 右上角
+    ctx.arcTo(buttonX + enterButton.width, buttonY, buttonX + enterButton.width, buttonY + radius, radius);  // 右上角圆角
+    ctx.lineTo(buttonX + enterButton.width, buttonY + enterButton.height - radius);  // 右边
+    ctx.arcTo(buttonX + enterButton.width, buttonY + enterButton.height, buttonX + enterButton.width - radius, buttonY + enterButton.height, radius);  // 右下角圆角
+    ctx.lineTo(buttonX + enterButton.width / 2, buttonY + enterButton.height);  // 下边中点
+    ctx.closePath();
+    ctx.fillStyle = stopBgColor;
+    ctx.fillStyle = rgbaToHex(ctx.fillStyle);
+    if (!buttonColorControl) {
+        ctx.fillStyle = 'rgba(96, 100, 111, 1)';
+    }
+    ctx.fill();
+    ctx.stroke();
+
+    // 绘制中间的分割线
+    ctx.beginPath();
+    ctx.moveTo(buttonX + enterButton.width / 2, buttonY + 2);
+    ctx.lineTo(buttonX + enterButton.width / 2, buttonY - 2 + enterButton.height);
+    ctx.lineWidth = 2;
+    // ctx.strokeStyle = isLong ? window.longToolColor['lineColor'] ? window.longToolColor['lineColor'] : window.shortToolColor['lineColor'] ? window.shortToolColor['lineColor'] : '#000000' : window.shortToolColor['lineColor'] ? window.shortToolColor['lineColor'] : '#000000';
+    ctx.stroke();
+
+    // 在左侧绘制对号，尖端向下，开口向上
+    ctx.beginPath();
+    ctx.moveTo(buttonX + enterButton.width / 4 - 5, buttonY + enterButton.height / 2 - 2);  // 顶部左边
+    ctx.lineTo(buttonX + enterButton.width / 4, buttonY + enterButton.height / 2 + 6);  // 尖端
+    ctx.lineTo(buttonX + enterButton.width / 4 + 10, buttonY + enterButton.height / 2 - 6);  // 顶部右边
+    ctx.strokeStyle = stopTextColor;
+    ctx.strokeStyle = rgbaToHex(ctx.strokeStyle);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 在右侧绘制叉号
+    ctx.beginPath();
+    ctx.moveTo(buttonX + 3 * enterButton.width / 4 - 5, buttonY + enterButton.height / 2 - 5);
+    ctx.lineTo(buttonX + 3 * enterButton.width / 4 + 5, buttonY + enterButton.height / 2 + 5);
+    ctx.moveTo(buttonX + 3 * enterButton.width / 4 + 5, buttonY + enterButton.height / 2 - 5);
+    ctx.lineTo(buttonX + 3 * enterButton.width / 4 - 5, buttonY + enterButton.height / 2 + 5);
+    // ctx.strokeStyle = isLong ? window.longToolColor['textColor'] ? window.longToolColor['textColor'] : window.shortToolColor['textColor'] ? window.shortToolColor['textColor'] : '#000000' : window.shortToolColor['textColor'] ? window.shortToolColor['textColor'] : '#000000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    window.toolsItem['stopY'] = null;
+    window.toolsItem['profitY'] = null;
+    ctx.restore();
+}
+
 // 添加组件被绘画的事件监听器
 document.addEventListener('toolItemDraw', (event) => {
     if (event.detail.originObj.toolname && event.detail.originObj.toolname.includes('LineToolRiskReward') && event.detail.rendererObj) {
@@ -224,10 +353,10 @@ document.addEventListener('toolItemDraw', (event) => {
         let stopRenderer = event.detail.rendererObj[0]._fullStopBgRenderer;
         let entryLineRenderer = event.detail.rendererObj[0]._entryLineRenderer;
         let ctx = event.detail.ctx;
-        let profitTextColor = profitRenderer.color;
-        let profitBgColor = profitRenderer.backcolor;
-        let stopTextColor = stopRenderer.color;
-        let stopBgColor = stopRenderer.backcolor;
+        let profitTextColor = profitRenderer._data.color;
+        let profitBgColor = profitRenderer._data.backcolor;
+        let stopTextColor = stopRenderer._data.color;
+        let stopBgColor = stopRenderer._data.backcolor;
 
         let minMaxBoxObj = minMaxBox(
             {x: 0, y: 0},
@@ -239,10 +368,7 @@ document.addEventListener('toolItemDraw', (event) => {
                 transformedPoints[0].x, transformedPoints[0].y, transformedPoints[1].x, transformedPoints[1].y,
                 {horizontalPixelRatio: horizontalPixelRatio, verticalPixelRatio: verticalPixelRatio});
             console.log(pointsOnCanvas);
-            ctx.save();
-            ctx.fillStyle = 'white';
-            ctx.fillRect(pointsOnCanvas.endPoint.x, pointsOnCanvas.endPoint.y, 20, 20);
-            ctx.restore();
+            drawButton(ctx, pointsOnCanvas.endPoint.x, pointsOnCanvas.endPoint.y, defaultRadius, profitTextColor, profitBgColor, stopTextColor, stopBgColor);
         }
     }
 });

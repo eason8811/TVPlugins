@@ -27,10 +27,10 @@ window.toolsItem = {
 };
 window.currentToolIndex = -1;
 
-let defaultWidth = getCache('toolsButtonWidth') ? getCache('toolsButtonWidth') : 75;
-let defaultHeight = defaultWidth / 2;
-let defaultRadius = 10;
-let originCursor = canvasNode1.style.cursor;    // 原来的鼠标样式
+// let defaultWidth = getCache('toolsButtonWidth') ? getCache('toolsButtonWidth') : 75;
+// let defaultHeight = defaultWidth / 2;
+// let defaultRadius = 10;
+// let originCursor = canvasNode1.style.cursor;    // 原来的鼠标样式
 let drawList = [];
 
 let enterButton = null;
