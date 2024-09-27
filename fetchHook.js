@@ -1,62 +1,3 @@
-// // 保存原始的 WebSocket 构造函数
-// window.OriginalWebSocket = window.WebSocket;
-//
-// // 重写 WebSocket 构造函数
-// window.WebSocket = function (url, protocols) {
-//     console.log('WebSocket 被创建:', url);
-//
-//     // 拦截 WebSocket 请求，添加一些自定义逻辑
-//     const socket = new window.OriginalWebSocket(url, protocols);
-//
-//     if (url.includes('data.tradingview.com')) {
-//         // Hook 连接成功事件
-//         socket.addEventListener('open', function (event) {
-//             console.log('WebSocket 开启:', event);
-//         });
-//
-//         // Hook 接收到消息的事件
-//         socket.addEventListener('message', function (event) {
-//             // console.log('WebSocket 收到信息:', event.data);
-//
-//             // 1. 使用 ~m~ 进行拆分
-//             const parts = event.data.split('~m~');
-//
-//             // 2. 去除无效的部分（奇数位是长度信息，偶数位是实际的 JSON 数据）
-//             const jsonMessages = [];
-//             for (let i = 2; i < parts.length; i += 2) {
-//                 if (parts[i].includes('~h~'))
-//                     continue;
-//                 const jsonPart = JSON.parse(parts[i]);
-//                 jsonMessages.push(jsonPart);
-//             }
-//
-//             // 3. 输出解析出的 JSON 对象
-//             if (jsonMessages.length === 1 && jsonMessages[0].m && jsonMessages[0].m === 'du' && jsonMessages[0].p[1].sds_1) {
-//                 console.log({
-//                     time: jsonMessages[0].p[1].sds_1.s[0].v[0],
-//                     open: jsonMessages[0].p[1].sds_1.s[0].v[1],
-//                     high: jsonMessages[0].p[1].sds_1.s[0].v[2],
-//                     low: jsonMessages[0].p[1].sds_1.s[0].v[3],
-//                     close: jsonMessages[0].p[1].sds_1.s[0].v[4],
-//                 });
-//             }
-//             // console.log(jsonMessages);
-//         });
-//
-//         // Hook 关闭事件
-//         socket.addEventListener('close', function (event) {
-//             // console.log('WebSocket 连接关闭:', event);
-//         });
-//
-//         // Hook 错误事件
-//         socket.addEventListener('error', function (event) {
-//             // console.error('WebSocket 错误:', event);
-//         });
-//     }
-//
-//     return socket;
-// };
-
 // 创建一个用于加载脚本的异步函数
 function loadScript(result) {
     return new Promise((resolve, reject) => {
@@ -253,7 +194,7 @@ function rgbaToHex(rgba) {
     return `#${hex}`;
 }
 
-function drawButton(ctx, x, y, radius, profitTextColor, profitBgColor, stopTextColor, stopBgColor) {
+function drawButton(ctx, x, y, radius, profitTextColor, profitBgColor, stopTextColor, stopBgColor, buttonListKey) {
     // x: 横坐标, y: 纵坐标, width: 宽度, height: 高度, radius: 圆角半径
     // 绘制下单按钮
     enterButton = {
@@ -283,7 +224,7 @@ function drawButton(ctx, x, y, radius, profitTextColor, profitBgColor, stopTextC
     ctx.fillStyle = rgbaToHex(ctx.fillStyle);
 
     // 当当前绘画的时最后一个组件时，检测最后一个组件的索引
-    let buttonColorControl = false;
+    let buttonColorControl = window.buttonList[buttonListKey];
 
     if (buttonColorControl) {
         ctx.fillStyle = 'rgba(96, 100, 111, 1)';
@@ -347,6 +288,15 @@ function drawButton(ctx, x, y, radius, profitTextColor, profitBgColor, stopTextC
 document.addEventListener('toolItemDraw', (event) => {
     if (event.detail.originObj.toolname && event.detail.originObj.toolname.includes('LineToolRiskReward') && event.detail.rendererObj) {
         console.log(event.detail);
+        let enterPrice = event.detail.originObj._points[0].price;
+        let enterTimestampLeftObj = event.detail.originObj._timePoint[0];
+        let enterTimestampRightObj = event.detail.originObj._timePoint[1];
+        let enterTimestampLeft = enterTimestampLeftObj.time_t + enterTimestampLeftObj.offset * 60 * parseInt(enterTimestampLeftObj.interval);
+        let enterTimestampRight = enterTimestampRightObj.time_t + enterTimestampRightObj.offset * 60 * parseInt(enterTimestampRightObj.interval);
+        let profitPrice = parseFloat(event.detail.originObj._profitPriceAxisView._axisRendererData.text);
+        let stopPrice = parseFloat(event.detail.originObj._stopPriceAxisView._axisRendererData.text);
+        let side = event.detail.originObj.toolname.includes('Long') ? 'long' : 'short';
+
         let horizontalPixelRatio = event.detail.bitMediaInfo.bitmapSize.width / event.detail.bitMediaInfo.mediaSize.width;
         let verticalPixelRatio = event.detail.bitMediaInfo.bitmapSize.height / event.detail.bitMediaInfo.mediaSize.height;
         let profitRenderer = event.detail.rendererObj[0]._fullTargetBgRenderer;
@@ -367,8 +317,11 @@ document.addEventListener('toolItemDraw', (event) => {
             let pointsOnCanvas = drawEnter(ctx,
                 transformedPoints[0].x, transformedPoints[0].y, transformedPoints[1].x, transformedPoints[1].y,
                 {horizontalPixelRatio: horizontalPixelRatio, verticalPixelRatio: verticalPixelRatio});
+
             console.log(pointsOnCanvas);
-            drawButton(ctx, pointsOnCanvas.endPoint.x, pointsOnCanvas.endPoint.y, defaultRadius, profitTextColor, profitBgColor, stopTextColor, stopBgColor);
+
+            drawButton(ctx, pointsOnCanvas.endPoint.x, pointsOnCanvas.endPoint.y, defaultRadius,
+                profitTextColor, profitBgColor, stopTextColor, stopBgColor, event.detail.originObj._id);
         }
     }
 });
@@ -495,3 +448,7 @@ window.fetch = function (...args) {
     // 调用原始的 fetch 方法
     return originalFetch.apply(this, arguments);
 };
+
+// window.addEventListener('load', function () {
+//     window.timezone = parseInt(document.querySelector('div .inline-BXXUwft2 button div').innerHTML.match(/\(\w*([+-]\d+)\)/)[1]);
+// });
