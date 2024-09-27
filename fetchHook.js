@@ -224,7 +224,7 @@ function drawButton(ctx, x, y, radius, profitTextColor, profitBgColor, stopTextC
     ctx.fillStyle = rgbaToHex(ctx.fillStyle);
 
     // 当当前绘画的时最后一个组件时，检测最后一个组件的索引
-    let buttonColorControl = window.buttonList[buttonListKey];
+    let buttonColorControl = window.buttonList[buttonListKey].opened;
 
     if (buttonColorControl) {
         ctx.fillStyle = 'rgba(96, 100, 111, 1)';
