@@ -4,6 +4,13 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.key && checkBoxIDList.includes(request.key)) {
         setCache(request.key, request.value);
         sendResponse({response: `${request.key},${request.value} content.js已收到`});  // 可选的，返回响应给 background.js
+        const localStorgeChanged = new CustomEvent('localStorgeChanged', {
+            detail: {
+                key: request.key,
+                value: request.value
+            }
+        });
+        window.dispatchEvent(localStorgeChanged);
     }
 });
 
@@ -31,7 +38,7 @@ function injectScript(file) {
     script.id = 'fetchHook';
     script.src = chrome.runtime.getURL(file);  // 获取插件内的脚本文件的绝对路径
     console.log(script);
-    script.onload = function() {
+    script.onload = function () {
         // 在脚本加载完成后，可以选择移除它，防止污染 DOM
         // this.remove();  // 这里选择在加载完后移除 <script> 标签
         console.log(`${file} 脚本加载完成`);
@@ -41,10 +48,6 @@ function injectScript(file) {
 
 // 注入 fetchHook.js
 injectScript('fetchHook.js');
-// 在页面加载完成后注入canvasHook.js脚本
-window.addEventListener('load', function () {
-    injectScript('canvasHook.js');
-});
 
 if (getCache('adsBlock')) {
     window.addEventListener('load', function () {

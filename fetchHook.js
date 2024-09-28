@@ -1,3 +1,12 @@
+/*
+hook到TV网页的加载器，以及模块数组的push方法，替换有关绘制盈亏比组件的脚本代码，插入提取代码
+*/
+
+window.webpackChunktradingview = window.webpackChunktradingview || [];
+window.rebound = false;
+// 保存原始的 push 方法
+const originalPush = self.webpackChunktradingview.push;
+
 // 创建一个用于加载脚本的异步函数
 function loadScript(result) {
     return new Promise((resolve, reject) => {
@@ -15,11 +24,6 @@ function loadScript(result) {
         URL.revokeObjectURL(blobURL);
     });
 }
-
-window.webpackChunktradingview = window.webpackChunktradingview || [];
-window.rebound = false;
-// 保存原始的 push 方法
-const originalPush = self.webpackChunktradingview.push;
 
 // 重写 push 方法
 self.webpackChunktradingview.push = function (...args) {
@@ -65,6 +69,11 @@ self.webpackChunktradingview.push = function (...args) {
     // 调用原始的 push 方法，保持原功能
     return originalPush.apply(this, args);
 };
+
+
+/*
+以下一系列函数是从TV网页脚本上扣下来的逻辑，用于将盈亏比组件中renderer中点的数据转换为canvas画布上点的数据
+ */
 
 function minMaxBox(t, n) {
     // t = {x: 0, y: 0}
@@ -155,11 +164,18 @@ function drawEnter(e, t, i, r, n, s) {
     return t === r ? p(e, Math.round(t * o), i * l, n * l) : i === n ? h(e, Math.round(i * l), t * o, r * o) : T(e, t * o, i * l, r * o, n * l);
 }
 
+/*
+定义按钮的长款以及圆角属性，为浏览器的localStorge变化添加事件监听器（其实是从content.js发过来的自定义事件）
+ */
+
 let defaultWidth = getCache('toolsButtonWidth') ? getCache('toolsButtonWidth') : 75;
 let defaultHeight = defaultWidth / 2;
 let defaultRadius = 10;
+let originCursor = null;    // 原来的鼠标样式
 
-// let originCursor = canvasNode1.style.cursor;    // 原来的鼠标样式
+window.addEventListener('localStorgeChanged', (event) => {
+    defaultWidth = event.detail.value;
+});
 
 function getCache(key) {
     let cacheObj = JSON.parse(localStorage.getItem(key));
@@ -168,6 +184,10 @@ function getCache(key) {
     }
     return null;
 }
+
+/*
+将rgba格式颜色代码转换为十六进制代码
+ */
 
 function rgbaToHex(rgba) {
     // 提取 r, g, b, a 值
@@ -194,29 +214,34 @@ function rgbaToHex(rgba) {
     return `#${hex}`;
 }
 
+/*
+绘制下单按钮
+ */
+
 function drawButton(ctx, x, y, radius, profitTextColor, profitBgColor, stopTextColor, stopBgColor, buttonListKey) {
     // x: 横坐标, y: 纵坐标, width: 宽度, height: 高度, radius: 圆角半径
     // 绘制下单按钮
-    enterButton = {
-        height: defaultHeight,
-        width: defaultWidth,
-        opened: false,
-    };
     ctx.save();
 
     let buttonX = x;
-    let buttonY = y - enterButton.height / 2;
+    let buttonY = y - defaultHeight / 2;
+    try {
+        window.buttonList[buttonListKey].buttonX = buttonX;
+        window.buttonList[buttonListKey].buttonY = buttonY;
+        window.buttonList[buttonListKey].buttonWidth = defaultWidth;
+        window.buttonList[buttonListKey].buttonHeight = defaultHeight;
+    } catch (e) {
+        console.error(e.message);
+    }
 
-    enterButton.buttonX = buttonX;
-    enterButton.buttonY = buttonY;
 
     // 绘制左半部分（绿色），中间无圆角
     ctx.beginPath();
     ctx.moveTo(buttonX + radius, buttonY);  // 左上角
-    ctx.lineTo(buttonX + enterButton.width / 2, buttonY);  // 上边中点
-    ctx.lineTo(buttonX + enterButton.width / 2, buttonY + enterButton.height);  // 下边中点
-    ctx.lineTo(buttonX + radius, buttonY + enterButton.height);  // 左下角
-    ctx.arcTo(buttonX, buttonY + enterButton.height, buttonX, buttonY + enterButton.height - radius, radius);  // 左下角圆角
+    ctx.lineTo(buttonX + defaultWidth / 2, buttonY);  // 上边中点
+    ctx.lineTo(buttonX + defaultWidth / 2, buttonY + defaultHeight);  // 下边中点
+    ctx.lineTo(buttonX + radius, buttonY + defaultHeight);  // 左下角
+    ctx.arcTo(buttonX, buttonY + defaultHeight, buttonX, buttonY + defaultHeight - radius, radius);  // 左下角圆角
     ctx.lineTo(buttonX, buttonY + radius);  // 左边
     ctx.arcTo(buttonX, buttonY, buttonX + radius, buttonY, radius);  // 左上角圆角
     ctx.closePath();
@@ -224,7 +249,7 @@ function drawButton(ctx, x, y, radius, profitTextColor, profitBgColor, stopTextC
     ctx.fillStyle = rgbaToHex(ctx.fillStyle);
 
     // 当当前绘画的时最后一个组件时，检测最后一个组件的索引
-    let buttonColorControl = window.buttonList[buttonListKey].opened;
+    let buttonColorControl = window.buttonList[buttonListKey] ? window.buttonList[buttonListKey].opened : false;
 
     if (buttonColorControl) {
         ctx.fillStyle = 'rgba(96, 100, 111, 1)';
@@ -236,12 +261,12 @@ function drawButton(ctx, x, y, radius, profitTextColor, profitBgColor, stopTextC
 
     // 绘制右半部分（红色），中间无圆角
     ctx.beginPath();
-    ctx.moveTo(buttonX + enterButton.width / 2, buttonY);  // 上边中点
-    ctx.lineTo(buttonX + enterButton.width - radius, buttonY);  // 右上角
-    ctx.arcTo(buttonX + enterButton.width, buttonY, buttonX + enterButton.width, buttonY + radius, radius);  // 右上角圆角
-    ctx.lineTo(buttonX + enterButton.width, buttonY + enterButton.height - radius);  // 右边
-    ctx.arcTo(buttonX + enterButton.width, buttonY + enterButton.height, buttonX + enterButton.width - radius, buttonY + enterButton.height, radius);  // 右下角圆角
-    ctx.lineTo(buttonX + enterButton.width / 2, buttonY + enterButton.height);  // 下边中点
+    ctx.moveTo(buttonX + defaultWidth / 2, buttonY);  // 上边中点
+    ctx.lineTo(buttonX + defaultWidth - radius, buttonY);  // 右上角
+    ctx.arcTo(buttonX + defaultWidth, buttonY, buttonX + defaultWidth, buttonY + radius, radius);  // 右上角圆角
+    ctx.lineTo(buttonX + defaultWidth, buttonY + defaultHeight - radius);  // 右边
+    ctx.arcTo(buttonX + defaultWidth, buttonY + defaultHeight, buttonX + defaultWidth - radius, buttonY + defaultHeight, radius);  // 右下角圆角
+    ctx.lineTo(buttonX + defaultWidth / 2, buttonY + defaultHeight);  // 下边中点
     ctx.closePath();
     ctx.fillStyle = stopBgColor;
     ctx.fillStyle = rgbaToHex(ctx.fillStyle);
@@ -253,17 +278,17 @@ function drawButton(ctx, x, y, radius, profitTextColor, profitBgColor, stopTextC
 
     // 绘制中间的分割线
     ctx.beginPath();
-    ctx.moveTo(buttonX + enterButton.width / 2, buttonY + 2);
-    ctx.lineTo(buttonX + enterButton.width / 2, buttonY - 2 + enterButton.height);
+    ctx.moveTo(buttonX + defaultWidth / 2, buttonY + 2);
+    ctx.lineTo(buttonX + defaultWidth / 2, buttonY - 2 + defaultHeight);
     ctx.lineWidth = 2;
     // ctx.strokeStyle = isLong ? window.longToolColor['lineColor'] ? window.longToolColor['lineColor'] : window.shortToolColor['lineColor'] ? window.shortToolColor['lineColor'] : '#000000' : window.shortToolColor['lineColor'] ? window.shortToolColor['lineColor'] : '#000000';
     ctx.stroke();
 
     // 在左侧绘制对号，尖端向下，开口向上
     ctx.beginPath();
-    ctx.moveTo(buttonX + enterButton.width / 4 - 5, buttonY + enterButton.height / 2 - 2);  // 顶部左边
-    ctx.lineTo(buttonX + enterButton.width / 4, buttonY + enterButton.height / 2 + 6);  // 尖端
-    ctx.lineTo(buttonX + enterButton.width / 4 + 10, buttonY + enterButton.height / 2 - 6);  // 顶部右边
+    ctx.moveTo(buttonX + defaultWidth / 4 - 5, buttonY + defaultHeight / 2 - 2);  // 顶部左边
+    ctx.lineTo(buttonX + defaultWidth / 4, buttonY + defaultHeight / 2 + 6);  // 尖端
+    ctx.lineTo(buttonX + defaultWidth / 4 + 10, buttonY + defaultHeight / 2 - 6);  // 顶部右边
     ctx.strokeStyle = stopTextColor;
     ctx.strokeStyle = rgbaToHex(ctx.strokeStyle);
     ctx.lineWidth = 2;
@@ -271,23 +296,21 @@ function drawButton(ctx, x, y, radius, profitTextColor, profitBgColor, stopTextC
 
     // 在右侧绘制叉号
     ctx.beginPath();
-    ctx.moveTo(buttonX + 3 * enterButton.width / 4 - 5, buttonY + enterButton.height / 2 - 5);
-    ctx.lineTo(buttonX + 3 * enterButton.width / 4 + 5, buttonY + enterButton.height / 2 + 5);
-    ctx.moveTo(buttonX + 3 * enterButton.width / 4 + 5, buttonY + enterButton.height / 2 - 5);
-    ctx.lineTo(buttonX + 3 * enterButton.width / 4 - 5, buttonY + enterButton.height / 2 + 5);
+    ctx.moveTo(buttonX + 3 * defaultWidth / 4 - 5, buttonY + defaultHeight / 2 - 5);
+    ctx.lineTo(buttonX + 3 * defaultWidth / 4 + 5, buttonY + defaultHeight / 2 + 5);
+    ctx.moveTo(buttonX + 3 * defaultWidth / 4 + 5, buttonY + defaultHeight / 2 - 5);
+    ctx.lineTo(buttonX + 3 * defaultWidth / 4 - 5, buttonY + defaultHeight / 2 + 5);
     // ctx.strokeStyle = isLong ? window.longToolColor['textColor'] ? window.longToolColor['textColor'] : window.shortToolColor['textColor'] ? window.shortToolColor['textColor'] : '#000000' : window.shortToolColor['textColor'] ? window.shortToolColor['textColor'] : '#000000';
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    window.toolsItem['stopY'] = null;
-    window.toolsItem['profitY'] = null;
     ctx.restore();
 }
 
 // 添加组件被绘画的事件监听器
 document.addEventListener('toolItemDraw', (event) => {
     if (event.detail.originObj.toolname && event.detail.originObj.toolname.includes('LineToolRiskReward') && event.detail.rendererObj) {
-        console.log(event.detail);
+        // console.log(event.detail);
         let enterPrice = event.detail.originObj._points[0].price;
         let enterTimestampLeftObj = event.detail.originObj._timePoint[0];
         let enterTimestampRightObj = event.detail.originObj._timePoint[1];
@@ -318,13 +341,60 @@ document.addEventListener('toolItemDraw', (event) => {
                 transformedPoints[0].x, transformedPoints[0].y, transformedPoints[1].x, transformedPoints[1].y,
                 {horizontalPixelRatio: horizontalPixelRatio, verticalPixelRatio: verticalPixelRatio});
 
-            console.log(pointsOnCanvas);
+            // console.log(pointsOnCanvas);
 
             drawButton(ctx, pointsOnCanvas.endPoint.x, pointsOnCanvas.endPoint.y, defaultRadius,
                 profitTextColor, profitBgColor, stopTextColor, stopBgColor, event.detail.originObj._id);
         }
     }
 });
+
+/*
+添加鼠标移动事件监听器
+ */
+function mouseMoveEvent(event) {
+    // window.currentToolIndex = -1;
+    const rect = this.getBoundingClientRect();
+
+    const scaleX = this.width / rect.width;
+    const scaleY = this.height / rect.height;
+
+    const mouseX = (event.clientX - rect.left) * scaleX;
+    const mouseY = (event.clientY - rect.top) * scaleY;
+
+    let cursorInRight = false;
+    let cursorInCancle = false;
+    for (let i = 0; i < Object.values(window.buttonList).length; i++) {
+        const buttonItem = Object.values(window.buttonList);
+        const buttonX = buttonItem[i].buttonX;
+        const buttonY = buttonItem[i].buttonY;
+        cursorInRight = cursorInRight || (mouseX > buttonX && mouseX < buttonX + buttonItem[i].buttonWidth / 2 && mouseY > buttonY && mouseY < buttonY + buttonItem[i].buttonHeight);
+        cursorInCancle = cursorInCancle || (mouseX > buttonX + buttonItem[i].buttonWidth / 2 && mouseX < buttonX + buttonItem[i].buttonWidth && mouseY > buttonY && mouseY < buttonY + buttonItem[i].buttonHeight);
+    }
+    console.log(mouseX, mouseY);
+
+    let mouseInStyle = ['pointer', 'not-allowed'];
+    originCursor = mouseInStyle.includes(this.style.cursor) ? originCursor : this.style.cursor;
+
+    if (cursorInRight) {
+        this.style.cursor = enterButton.opened ? 'not-allowed' : 'pointer';
+    } else if (cursorInCancle) {
+        this.style.cursor = enterButton.opened ? 'pointer' : 'not-allowed';
+    } else {
+        this.style.cursor = originCursor;
+    }
+}
+
+function setupEventListeners(canvas) {
+    canvas.addEventListener('mousemove', mouseMoveEvent);
+    // canvas.addEventListener('click', clickEvent);
+}
+
+// 添加事件监听器
+window.addEventListener('load', () => {
+    originCursor = document.querySelector('div.chart-gui-wrapper canvas').style.cursor;
+    setupEventListeners(document.querySelectorAll('div.chart-gui-wrapper canvas')[1]);
+})
 
 // Hook window的fetch方法，拦截请求并处理数据，将处理后的多头空头组件信息存在window.buttonList中
 function getDecimalPlaces(num) {
@@ -355,21 +425,6 @@ function loadTools(sources) {
         let side = name.toLowerCase().includes('short') ? 'short' : name.toLowerCase().includes('long') ? 'long' : null;
         if (side === null)
             continue;
-
-        if (window.longToolColor === null && side === 'long') {
-            window.longToolColor = {};
-            window.longToolColor['profitColor'] = sources[key]['state']['state']['profitBackground'];
-            window.longToolColor['stopColor'] = sources[key]['state']['state']['stopBackground'];
-            window.longToolColor['lineColor'] = sources[key]['state']['state']['linecolor'];
-            window.longToolColor['textColor'] = sources[key]['state']['state']['textcolor'];
-        }
-        if (window.shortToolColor === null && side === 'short') {
-            window.shortToolColor = {};
-            window.shortToolColor['profitColor'] = sources[key]['state']['state']['profitBackground'];
-            window.shortToolColor['stopColor'] = sources[key]['state']['state']['stopBackground'];
-            window.shortToolColor['lineColor'] = sources[key]['state']['state']['linecolor'];
-            window.shortToolColor['textColor'] = sources[key]['state']['state']['textcolor'];
-        }
 
         let enter = sources[key]['state']['points'][0]['price'];
         let small_point = getDecimalPlaces(enter);
@@ -403,10 +458,7 @@ function loadTools(sources) {
     }
 }
 
-window.longToolColor = null;
-window.shortToolColor = null;
 window.buttonList = {};
-
 
 const originalFetch = window.fetch;
 window.fetch = function (...args) {
