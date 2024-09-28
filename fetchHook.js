@@ -175,6 +175,7 @@ let originCursor = null;    // 原来的鼠标样式
 
 window.addEventListener('localStorgeChanged', (event) => {
     defaultWidth = event.detail.value;
+    defaultHeight = defaultWidth / 2;
 });
 
 function getCache(key) {
@@ -362,26 +363,16 @@ function mouseMoveEvent(event) {
     const mouseX = (event.clientX - rect.left) * scaleX;
     const mouseY = (event.clientY - rect.top) * scaleY;
 
-    let cursorInRight = false;
-    let cursorInCancle = false;
     for (let i = 0; i < Object.values(window.buttonList).length; i++) {
-        const buttonItem = Object.values(window.buttonList);
-        const buttonX = buttonItem[i].buttonX;
-        const buttonY = buttonItem[i].buttonY;
-        cursorInRight = cursorInRight || (mouseX > buttonX && mouseX < buttonX + buttonItem[i].buttonWidth / 2 && mouseY > buttonY && mouseY < buttonY + buttonItem[i].buttonHeight);
-        cursorInCancle = cursorInCancle || (mouseX > buttonX + buttonItem[i].buttonWidth / 2 && mouseX < buttonX + buttonItem[i].buttonWidth && mouseY > buttonY && mouseY < buttonY + buttonItem[i].buttonHeight);
-    }
-    console.log(mouseX, mouseY);
-
-    let mouseInStyle = ['pointer', 'not-allowed'];
-    originCursor = mouseInStyle.includes(this.style.cursor) ? originCursor : this.style.cursor;
-
-    if (cursorInRight) {
-        this.style.cursor = enterButton.opened ? 'not-allowed' : 'pointer';
-    } else if (cursorInCancle) {
-        this.style.cursor = enterButton.opened ? 'pointer' : 'not-allowed';
-    } else {
-        this.style.cursor = originCursor;
+        let mouseInStyle = ['pointer', 'not-allowed'];
+        originCursor = mouseInStyle.includes(this.style.cursor) ? originCursor : this.style.cursor;
+        const buttonItem = Object.values(window.buttonList)[i];
+        if (buttonItem.getCursorType(mouseX, mouseY)){
+            this.style.cursor = buttonItem.getCursorType(mouseX, mouseY);
+            break;
+        }else {
+            this.style.cursor = originCursor;
+        }
     }
 }
 
@@ -452,7 +443,28 @@ function loadTools(sources) {
             stop: stop,
             profit: profit,
             side: side,
-            opened: false
+            opened: false,
+            getCursorType: function (x, y) {
+                let orderButtonX1, orderButtonY1, orderButtonX2, orderButtonY2;
+                orderButtonX1 = this.buttonX;
+                orderButtonY1 = this.buttonY;
+                orderButtonX2 = this.buttonX + this.buttonWidth / 2;
+                orderButtonY2 = this.buttonY + this.buttonHeight;
+
+                let cancelButtonX1, cancelButtonY1, cancelButtonX2, cancelButtonY2;
+                cancelButtonX1 = this.buttonX + this.buttonWidth / 2;
+                cancelButtonY1 = this.buttonY;
+                cancelButtonX2 = this.buttonX + this.buttonWidth;
+                cancelButtonY2 = this.buttonY + this.buttonHeight;
+
+                if (x > orderButtonX1 && x < orderButtonX2 && y > orderButtonY1 && y < orderButtonY2) {
+                    return this.opened ? 'not-allowed' : 'pointer';
+                } else if (x > cancelButtonX1 && x < cancelButtonX2 && y > cancelButtonY1 && y < cancelButtonY2) {
+                    return this.opened ? 'pointer' : 'not-allowed';
+                } else {
+                    return null;
+                }
+            }
         };
         console.log(`组件名称为:${name}\n进场价格为:${enter}\n止损价格为:${stop}\n止盈价格为:${profit}`);
     }
