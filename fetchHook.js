@@ -311,15 +311,8 @@ function drawButton(ctx, x, y, radius, profitTextColor, profitBgColor, stopTextC
 // 添加组件被绘画的事件监听器
 document.addEventListener('toolItemDraw', (event) => {
     if (event.detail.originObj.toolname && event.detail.originObj.toolname.includes('LineToolRiskReward') && event.detail.rendererObj) {
-        // console.log(event.detail);
-        let enterPrice = event.detail.originObj._points[0].price;
-        let enterTimestampLeftObj = event.detail.originObj._timePoint[0];
-        let enterTimestampRightObj = event.detail.originObj._timePoint[1];
-        let enterTimestampLeft = enterTimestampLeftObj.time_t + enterTimestampLeftObj.offset * 60 * parseInt(enterTimestampLeftObj.interval);
-        let enterTimestampRight = enterTimestampRightObj.time_t + enterTimestampRightObj.offset * 60 * parseInt(enterTimestampRightObj.interval);
-        let profitPrice = parseFloat(event.detail.originObj._profitPriceAxisView._axisRendererData.text);
-        let stopPrice = parseFloat(event.detail.originObj._stopPriceAxisView._axisRendererData.text);
-        let side = event.detail.originObj.toolname.includes('Long') ? 'long' : 'short';
+        console.log(event.detail);
+        let toolId = event.detail.originObj._id;
 
         let horizontalPixelRatio = event.detail.bitMediaInfo.bitmapSize.width / event.detail.bitMediaInfo.mediaSize.width;
         let verticalPixelRatio = event.detail.bitMediaInfo.bitmapSize.height / event.detail.bitMediaInfo.mediaSize.height;
@@ -345,7 +338,7 @@ document.addEventListener('toolItemDraw', (event) => {
             // console.log(pointsOnCanvas);
 
             drawButton(ctx, pointsOnCanvas.endPoint.x, pointsOnCanvas.endPoint.y, defaultRadius,
-                profitTextColor, profitBgColor, stopTextColor, stopBgColor, event.detail.originObj._id);
+                profitTextColor, profitBgColor, stopTextColor, stopBgColor, toolId);
         }
     }
 });
@@ -354,7 +347,6 @@ document.addEventListener('toolItemDraw', (event) => {
 添加鼠标移动事件监听器
  */
 function mouseMoveEvent(event) {
-    // window.currentToolIndex = -1;
     const rect = this.getBoundingClientRect();
 
     const scaleX = this.width / rect.width;
@@ -363,15 +355,32 @@ function mouseMoveEvent(event) {
     const mouseX = (event.clientX - rect.left) * scaleX;
     const mouseY = (event.clientY - rect.top) * scaleY;
 
-    for (let i = 0; i < Object.values(window.buttonList).length; i++) {
+    for (let key in window.buttonList) {
         let mouseInStyle = ['pointer', 'not-allowed'];
         originCursor = mouseInStyle.includes(this.style.cursor) ? originCursor : this.style.cursor;
-        const buttonItem = Object.values(window.buttonList)[i];
-        if (buttonItem.getCursorType(mouseX, mouseY)){
+        const buttonItem = window.buttonList[key];
+        if (buttonItem.getCursorType(mouseX, mouseY)) {
             this.style.cursor = buttonItem.getCursorType(mouseX, mouseY);
             break;
-        }else {
+        } else {
             this.style.cursor = originCursor;
+        }
+    }
+}
+
+function mouseDownEvent(event) {
+    const rect = this.getBoundingClientRect();
+
+    const scaleX = this.width / rect.width;
+    const scaleY = this.height / rect.height;
+
+    const mouseX = (event.clientX - rect.left) * scaleX;
+    const mouseY = (event.clientY - rect.top) * scaleY;
+
+    for (let key in window.buttonList) {
+        const buttonItem = window.buttonList[key];
+        if (buttonItem.getInsideOrder(mouseX, mouseY)) {
+
         }
     }
 }
@@ -444,27 +453,33 @@ function loadTools(sources) {
             profit: profit,
             side: side,
             opened: false,
-            getCursorType: function (x, y) {
+            getInsideOrder: function (x, y) {
                 let orderButtonX1, orderButtonY1, orderButtonX2, orderButtonY2;
                 orderButtonX1 = this.buttonX;
                 orderButtonY1 = this.buttonY;
                 orderButtonX2 = this.buttonX + this.buttonWidth / 2;
                 orderButtonY2 = this.buttonY + this.buttonHeight;
 
+                return x > orderButtonX1 && x < orderButtonX2 && y > orderButtonY1 && y < orderButtonY2;
+            },
+            getInsideCancel: function (x, y) {
                 let cancelButtonX1, cancelButtonY1, cancelButtonX2, cancelButtonY2;
                 cancelButtonX1 = this.buttonX + this.buttonWidth / 2;
                 cancelButtonY1 = this.buttonY;
                 cancelButtonX2 = this.buttonX + this.buttonWidth;
                 cancelButtonY2 = this.buttonY + this.buttonHeight;
 
-                if (x > orderButtonX1 && x < orderButtonX2 && y > orderButtonY1 && y < orderButtonY2) {
+                return x > cancelButtonX1 && x < cancelButtonX2 && y > cancelButtonY1 && y < cancelButtonY2;
+            },
+            getCursorType: function (x, y) {
+                if (this.getInsideOrder(x, y)) {
                     return this.opened ? 'not-allowed' : 'pointer';
-                } else if (x > cancelButtonX1 && x < cancelButtonX2 && y > cancelButtonY1 && y < cancelButtonY2) {
+                } else if (this.getInsideCancel(x, y)) {
                     return this.opened ? 'pointer' : 'not-allowed';
                 } else {
                     return null;
                 }
-            }
+            },
         };
         console.log(`组件名称为:${name}\n进场价格为:${enter}\n止损价格为:${stop}\n止盈价格为:${profit}`);
     }
