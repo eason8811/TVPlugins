@@ -164,10 +164,8 @@ function drawEnter(e, t, i, r, n, s) {
     return t === r ? p(e, Math.round(t * o), i * l, n * l) : i === n ? h(e, Math.round(i * l), t * o, r * o) : T(e, t * o, i * l, r * o, n * l);
 }
 
-/*
-定义按钮的长款以及圆角属性，为浏览器的localStorge变化添加事件监听器（其实是从content.js发过来的自定义事件）
- */
 
+//定义按钮的长款以及圆角属性，为浏览器的localStorge变化添加事件监听器（其实是从content.js发过来的自定义事件）
 let defaultWidth = getCache('toolsButtonWidth') ? getCache('toolsButtonWidth') : 75;
 let defaultHeight = defaultWidth / 2;
 let defaultRadius = 10;
@@ -337,8 +335,8 @@ document.addEventListener('toolItemDraw', (event) => {
 
             // console.log(pointsOnCanvas);
 
-            drawButton(ctx, pointsOnCanvas.endPoint.x, pointsOnCanvas.endPoint.y, defaultRadius,
-                profitTextColor, profitBgColor, stopTextColor, stopBgColor, toolId);
+            // drawButton(ctx, pointsOnCanvas.endPoint.x, pointsOnCanvas.endPoint.y, defaultRadius,
+            //     profitTextColor, profitBgColor, stopTextColor, stopBgColor, toolId);
         }
     }
 });

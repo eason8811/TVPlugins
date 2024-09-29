@@ -12,8 +12,7 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "fetchHook.js",
-        "canvasHook.js"
+        "functionScripts/*"
       ],
       "matches": [
         "https://cn.tradingview.com/*",

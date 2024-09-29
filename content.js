@@ -47,9 +47,9 @@ function injectScript(file) {
 }
 
 // 注入脚本
-injectScript('webpackHook.js');
-injectScript('fetchHook.js');
-injectScript('adsBlock.js')
+// injectScript('functionScripts/webpackHook.js');
+injectScript('functionScripts/fetchHook.js');
+// injectScript('functionScripts/adsBlock.js');
 
 
 
