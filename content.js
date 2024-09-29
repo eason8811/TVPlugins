@@ -14,7 +14,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     }
 });
 
-window.getCache = function (key) {
+function getCache(key) {
     let cacheObj = JSON.parse(localStorage.getItem(key));
     if (cacheObj) {
         return cacheObj.value;
@@ -22,7 +22,7 @@ window.getCache = function (key) {
     return null;
 }
 
-window.setCache = function (key, value) {
+function setCache(key, value) {
     let cacheObj = {
         value: value,
     }
@@ -47,9 +47,10 @@ function injectScript(file) {
 }
 
 // 注入脚本
-// injectScript('functionScripts/webpackHook.js');
-injectScript('functionScripts/fetchHook.js');
-// injectScript('functionScripts/adsBlock.js');
+injectScript('functionScripts/webpackHook.js');
+// injectScript('functionScripts/fetchHook.js');
+injectScript('functionScripts/adsBlock.js');
+injectScript('functionScripts/buttonDraw.js');
 
 
 

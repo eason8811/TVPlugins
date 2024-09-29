@@ -1,7 +1,20 @@
-/*
-hook到TV网页的加载器，以及模块数组的push方法，替换有关绘制盈亏比组件的脚本代码，插入提取代码
-*/
+window.getCache = function (key) {
+    let cacheObj = JSON.parse(localStorage.getItem(key));
+    if (cacheObj) {
+        return cacheObj.value;
+    }
+    return null;
+}
 
+window.setCache = function (key, value) {
+    let cacheObj = {
+        value: value,
+    }
+    localStorage.setItem(key, JSON.stringify(cacheObj));
+}
+
+
+//hook到TV网页的加载器，以及模块数组的push方法，替换有关绘制盈亏比组件的脚本代码，插入提取代码
 window.webpackChunktradingview = window.webpackChunktradingview || [];
 window.rebound = false;
 // 保存原始的 push 方法

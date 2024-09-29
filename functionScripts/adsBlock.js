@@ -1,4 +1,4 @@
-if (getCache('adsBlock')) {
+if (window.getCache('adsBlock')) {
     window.addEventListener('load', function () {
         console.log('Page fully loaded');
 
