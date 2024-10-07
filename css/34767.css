@@ -1,0 +1,38 @@
+.container-CTQ1auV7 {
+    height: 48px
+}
+
+.leftSlot-CTQ1auV7 {
+    flex: 1;
+    padding: 6px 0
+}
+
+.rightSlot-CTQ1auV7 {
+    padding: 6px 0
+}
+
+.subheader-CTQ1auV7 {
+    align-items: center;
+    border-bottom: 1px solid #e0e3eb;
+    box-sizing: border-box;
+    cursor: default;
+    display: flex;
+    height: 48px;
+    height: 39px;
+    margin: 0;
+    padding: 0 8px
+}
+
+html.theme-dark .subheader-CTQ1auV7 {
+    border-bottom-color: #434651
+}
+
+.wrapper-CTQ1auV7 {
+    display: flex;
+    flex-direction: column
+}
+
+.tabs-sgw6Ccw0 {
+    align-self: end;
+    padding-bottom: 2px
+}

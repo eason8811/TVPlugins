@@ -6,33 +6,42 @@ let defaultRadius = 10;
 let originCursor = null;    // 原来的鼠标样式
 
 window.addEventListener('localStorgeChanged', (event) => {
-    defaultWidth = event.detail.value;
-    defaultHeight = defaultWidth / 2;
-    for (let key in window.buttonList) {
-        window.buttonList[key].setWidth(defaultWidth);
+    if (event.detail.key === 'toolsButtonWidth') {
+        defaultWidth = event.detail.value;
+        defaultHeight = defaultWidth / 2;
+        for (let key in window.buttonList) {
+            window.buttonList[key].setWidth(defaultWidth);
+        }
     }
 });
 
 class Button {
     constructor(buttonElement) {
-        this.ctx = buttonElement.ctx;
-        this.id = buttonElement.id;
-        this.enter = buttonElement.enter;
-        this.profit = buttonElement.profit;
-        this.stop = buttonElement.stop;
+        this.setButtonBasicInfo = function (buttonElement) {
+            this.ctx = buttonElement.ctx;
+            this.id = buttonElement.id;
+            this.enter = buttonElement.enter;
+            this.profit = buttonElement.profit;
+            this.stop = buttonElement.stop;
+            // this.opened = buttonElement.opened;
+            this.relativeX = buttonElement.relativeX;   // 绘画参照物的x坐标
+            this.relativeY = buttonElement.relativeY;   // 绘画参照物的y坐标
+            this._x = this.relativeX;
+            this._y = this.relativeY - buttonElement.height / 2;
+            this.width = buttonElement.width;
+            this.height = buttonElement.height;
+            this.originProfitColor = buttonElement.profitColor;
+            this.originStopColor = buttonElement.stopColor;
+            this.profitTextColor = buttonElement.profitTextColor;
+            this.stopTextColor = buttonElement.stopTextColor;
+            this.radius = buttonElement.radius;
+        }
+        this.setButtonBasicInfo(buttonElement);
         this.opened = buttonElement.opened;
-        this.relativeX = buttonElement.relativeX;   // 绘画参照物的x坐标
-        this.relativeY = buttonElement.relativeY;   // 绘画参照物的y坐标
-        this._x = this.relativeX;
-        this._y = this.relativeY - buttonElement.height / 2;
-        this.width = buttonElement.width;
-        this.height = buttonElement.height;
         this.profitColor = buttonElement.profitColor;
-        this.stopColor = buttonElement.stopColor;
-        this.profitTextColor = buttonElement.profitTextColor;
-        this.stopTextColor = buttonElement.stopTextColor;
-        this.radius = buttonElement.radius;
+        this.stopColor = buttonElement.profitColor;
     }
+
 
     get x() {
         return this._x;
@@ -41,6 +50,10 @@ class Button {
     get y() {
         this._y = this.relativeY - this.height / 2;
         return this._y;
+    }
+
+    setButtonInfo(buttonElement) {
+        this.setButtonBasicInfo(buttonElement);
     }
 
     getInsideOrder(x, y) {
@@ -272,7 +285,7 @@ function drawEnter(e, t, i, r, n, s) {
 
 // 添加组件被绘画的事件监听器
 document.addEventListener('toolItemDraw', (event) => {
-    if (event.detail.originObj.toolname && event.detail.originObj.toolname.includes('LineToolRiskReward') && event.detail.rendererObj) {
+    if (window.getCache('toolsButton') && event.detail.originObj.toolname && event.detail.originObj.toolname.includes('LineToolRiskReward') && event.detail.rendererObj) {
         // console.log(event.detail);
         let toolId = event.detail.originObj._id;
 
@@ -282,6 +295,8 @@ document.addEventListener('toolItemDraw', (event) => {
         let stopRenderer = event.detail.rendererObj[0]._fullStopBgRenderer;
         let entryLineRenderer = event.detail.rendererObj[0]._entryLineRenderer;
         let ctx = event.detail.ctx;
+        if (!profitRenderer._data || !stopRenderer._data)
+            return;
         let profitTextColor = profitRenderer._data.color;
         let profitBgColor = profitRenderer._data.backcolor;
         let stopTextColor = stopRenderer._data.color;
@@ -314,8 +329,123 @@ document.addEventListener('toolItemDraw', (event) => {
                 stopTextColor: stopTextColor,
                 radius: defaultRadius
             };
-            window.buttonList[toolId] = new Button(buttonInfo);
-            window.buttonList[toolId].draw();
+            if (toolId in window.buttonList) {
+                window.buttonList[toolId].setButtonInfo(buttonInfo);
+                window.buttonList[toolId].draw();
+            } else {
+                window.buttonList[toolId] = new Button(buttonInfo);
+                window.buttonList[toolId].draw();
+            }
         }
     }
 });
+
+function darkenRGBA(rgba, factor = 0.9) {
+    // 匹配 RGBA 颜色的正则表达式
+    const rgbaPattern = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*(\d*\.?\d+))?\s*\)$/;
+    const result = rgbaPattern.exec(rgba);
+
+    if (!result) {
+        throw new Error("输入不是有效的 RGBA 颜色格式");
+    }
+
+    // 获取 r, g, b, a 值
+    let [_, r, g, b, a] = result;
+    r = Math.min(255, Math.max(0, Math.floor(r * factor)));
+    g = Math.min(255, Math.max(0, Math.floor(g * factor)));
+    b = Math.min(255, Math.max(0, Math.floor(b * factor)));
+
+    // 如果 alpha 不存在，默认为 1
+    a = a !== undefined ? a : 1;
+
+    // 返回变暗后的 RGBA 颜色
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+//添加鼠标移动事件监听器
+function mouseMoveEvent(event) {
+    const rect = this.getBoundingClientRect();
+
+    const scaleX = this.width / rect.width;
+    const scaleY = this.height / rect.height;
+
+    const mouseX = (event.clientX - rect.left) * scaleX;
+    const mouseY = (event.clientY - rect.top) * scaleY;
+
+    for (let key in window.buttonList) {
+        let mouseInStyle = ['pointer', 'not-allowed'];
+        originCursor = mouseInStyle.includes(this.style.cursor) ? originCursor : this.style.cursor;
+        const buttonItem = window.buttonList[key];
+        if (buttonItem.getCursorType(mouseX, mouseY)) {
+            this.style.cursor = buttonItem.getCursorType(mouseX, mouseY);
+            break;
+        } else {
+            this.style.cursor = originCursor;
+        }
+    }
+}
+
+function mouseDownEvent(event) {
+    const rect = this.getBoundingClientRect();
+
+    const scaleX = this.width / rect.width;
+    const scaleY = this.height / rect.height;
+
+    const mouseX = (event.clientX - rect.left) * scaleX;
+    const mouseY = (event.clientY - rect.top) * scaleY;
+
+    for (let key in window.buttonList) {
+        const buttonItem = window.buttonList[key];
+        if (buttonItem.getInsideOrder(mouseX, mouseY) && !buttonItem.opened) {
+            buttonItem.profitColor = darkenRGBA(buttonItem.profitColor, 0.8);
+            buttonItem.draw();
+            break;
+        } else if (buttonItem.getInsideCancel(mouseX, mouseY) && buttonItem.opened) {
+            buttonItem.stopColor = darkenRGBA(buttonItem.stopColor, 0.8);
+            buttonItem.draw();
+            break;
+        }
+    }
+}
+
+function mouseUpEvent(event) {
+    for (let key in window.buttonList) {
+        const buttonItem = window.buttonList[key];
+        buttonItem.profitColor = buttonItem.originProfitColor;
+        buttonItem.stopColor = buttonItem.originStopColor;
+        buttonItem.draw();
+    }
+}
+
+function clickEvent(event) {
+    const rect = this.getBoundingClientRect();
+
+    const scaleX = this.width / rect.width;
+    const scaleY = this.height / rect.height;
+
+    const mouseX = (event.clientX - rect.left) * scaleX;
+    const mouseY = (event.clientY - rect.top) * scaleY;
+
+    for (let key in window.buttonList) {
+        const buttonItem = window.buttonList[key];
+        if (buttonItem.getInsideOrder(mouseX, mouseY) && !buttonItem.opened) {
+            buttonItem.opened = true;
+            buttonItem.draw();
+            break;
+        } else if (buttonItem.getInsideCancel(mouseX, mouseY) && buttonItem.opened) {
+            buttonItem.opened = false;
+            buttonItem.draw();
+            break;
+        }
+    }
+}
+
+function setupEventListeners() {
+    let canvas = document.querySelectorAll('.chart-gui-wrapper canvas')[1];
+    canvas.addEventListener('mousemove', mouseMoveEvent);
+    canvas.addEventListener('mousedown', mouseDownEvent);
+    canvas.addEventListener('mouseup', mouseUpEvent);
+    canvas.addEventListener('click', clickEvent);
+}
+
+window.onload = setupEventListeners;

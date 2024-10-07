@@ -1,0 +1,205 @@
+.lightTabButton-_v4jz9BC {
+    align-items: center;
+    background-color: #f0f3fa;
+    border: none;
+    color: #131722;
+    display: inline-flex;
+    gap: 4px;
+    justify-content: center;
+    max-width: 100%;
+    min-width: 4px
+}
+
+html.theme-dark .lightTabButton-_v4jz9BC {
+    background-color: #2a2e39;
+    color: #d1d4dc
+}
+
+.lightTabButton-_v4jz9BC {
+    outline: none;
+    overflow: visible;
+    position: relative
+}
+
+.lightTabButton-_v4jz9BC:focus {
+    outline: none
+}
+
+.lightTabButton-_v4jz9BC:focus-visible {
+    outline: none
+}
+
+.lightTabButton-_v4jz9BC:after {
+    border-style: solid;
+    border-width: 2px;
+    box-sizing: border-box;
+    content: "";
+    display: none;
+    height: calc(100% + 8px);
+    left: -4px;
+    pointer-events: none;
+    position: absolute;
+    top: -4px;
+    width: calc(100% + 8px);
+    z-index: 1
+}
+
+.lightTabButton-_v4jz9BC:focus:after {
+    display: block
+}
+
+.lightTabButton-_v4jz9BC:focus-visible:after {
+    display: block
+}
+
+.lightTabButton-_v4jz9BC:focus:not(:focus-visible):after {
+    display: none
+}
+
+.lightTabButton-_v4jz9BC:after, html.theme-dark .lightTabButton-_v4jz9BC:after {
+    border-color: #2962ff
+}
+
+@media (any-hover: hover) {
+    .lightTabButton-_v4jz9BC:hover:not(:disabled):not(.lightTabButton-_v4jz9BC.selected-_v4jz9BC) {
+        background-color: #e0e3eb
+    }
+
+    html.theme-dark .lightTabButton-_v4jz9BC:hover:not(:disabled):not(.lightTabButton-_v4jz9BC.selected-_v4jz9BC) {
+        background-color: #363a45
+    }
+}
+
+.lightTabButton-_v4jz9BC:active:not(:disabled):not([aria-disabled=true]):active {
+    background-color: #d1d4dc
+}
+
+html.theme-dark .lightTabButton-_v4jz9BC:active:not(:disabled):not([aria-disabled=true]):active {
+    background-color: #434651
+}
+
+.lightTabButton-_v4jz9BC.selected-_v4jz9BC {
+    background-color: #fff;
+    color: #131722
+}
+
+html.theme-dark .lightTabButton-_v4jz9BC.selected-_v4jz9BC {
+    background-color: #131722;
+    color: #fff
+}
+
+.lightTabButton-_v4jz9BC:disabled, .lightTabButton-_v4jz9BC[aria-disabled=true] {
+    background-color: #f0f3fa;
+    color: #b2b5be
+}
+
+html.theme-dark .lightTabButton-_v4jz9BC:disabled, html.theme-dark .lightTabButton-_v4jz9BC[aria-disabled=true] {
+    background-color: #2a2e39;
+    color: #5d606b
+}
+
+.lightTabButton-_v4jz9BC:not(:focus-visible):after {
+    display: none
+}
+
+.content-_v4jz9BC {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+.content-_v4jz9BC:after {
+    content: "";
+    display: block
+}
+
+.lightTabButton-_v4jz9BC.xsmall-_v4jz9BC {
+    border-radius: 5px;
+    height: 28px
+}
+
+.lightTabButton-_v4jz9BC.xsmall-_v4jz9BC:after {
+    border-radius: 9px
+}
+
+.lightTabButton-_v4jz9BC.small-_v4jz9BC {
+    border-radius: 5px;
+    height: 34px
+}
+
+.lightTabButton-_v4jz9BC.small-_v4jz9BC:after {
+    border-radius: 9px
+}
+
+.lightTabButton-_v4jz9BC.medium-_v4jz9BC {
+    border-radius: 8px;
+    height: 40px
+}
+
+.lightTabButton-_v4jz9BC.medium-_v4jz9BC:after {
+    border-radius: 12px
+}
+
+.lightTabButton-_v4jz9BC.xsmall-_v4jz9BC {
+    font-feature-settings: "tnum" on, "lnum" on;
+    font-size: var(--ui-lib-typography-font-size);
+    font-style: normal;
+    font-weight: 400
+}
+
+.lightTabButton-_v4jz9BC.xsmall-_v4jz9BC, .lightTabButton-_v4jz9BC.xsmall-_v4jz9BC.selected-_v4jz9BC {
+    font-family: -apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif;
+    --ui-lib-typography-font-size: 14px;
+    --ui-lib-typography-line-height: 18px;
+    line-height: var(--ui-lib-typography-line-height)
+}
+
+.lightTabButton-_v4jz9BC.xsmall-_v4jz9BC.selected-_v4jz9BC {
+    font-feature-settings: "tnum" on, "lnum" on;
+    font-size: var(--ui-lib-typography-font-size);
+    font-style: normal;
+    font-weight: 600
+}
+
+.lightTabButton-_v4jz9BC.medium-_v4jz9BC, .lightTabButton-_v4jz9BC.small-_v4jz9BC {
+    font-feature-settings: "tnum" on, "lnum" on;
+    font-size: var(--ui-lib-typography-font-size);
+    font-style: normal;
+    font-weight: 400
+}
+
+.lightTabButton-_v4jz9BC.medium-_v4jz9BC, .lightTabButton-_v4jz9BC.medium-_v4jz9BC.selected-_v4jz9BC, .lightTabButton-_v4jz9BC.small-_v4jz9BC, .lightTabButton-_v4jz9BC.small-_v4jz9BC.selected-_v4jz9BC {
+    font-family: -apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif;
+    --ui-lib-typography-font-size: 16px;
+    --ui-lib-typography-line-height: 24px;
+    line-height: var(--ui-lib-typography-line-height)
+}
+
+.lightTabButton-_v4jz9BC.medium-_v4jz9BC.selected-_v4jz9BC, .lightTabButton-_v4jz9BC.small-_v4jz9BC.selected-_v4jz9BC {
+    font-feature-settings: "tnum" on, "lnum" on;
+    font-size: var(--ui-lib-typography-font-size);
+    font-style: normal;
+    font-weight: 600
+}
+
+.lightTabs-LqEaU5HP {
+    background-color: #f0f3fa;
+    border-radius: 8px;
+    box-sizing: border-box;
+    display: inline-grid;
+    gap: 3px;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    padding: 3px;
+    width: 100%
+}
+
+html.theme-dark .lightTabs-LqEaU5HP {
+    background-color: #2a2e39
+}
+
+.lightTabs-LqEaU5HP.medium-LqEaU5HP {
+    border-radius: 12px;
+    gap: 4px;
+    padding: 4px
+}

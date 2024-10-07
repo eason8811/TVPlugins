@@ -11,6 +11,15 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             }
         });
         window.dispatchEvent(localStorgeChanged);
+    } else {
+        sendResponse({response: `${request.key},${request.value} content.js已收到`});  // 可选的，返回响应给 background.js
+        const event = new CustomEvent(request.key, {
+            detail:{
+                key: request.key,
+                value: request.value
+            }
+        });
+        window.dispatchEvent(event);
     }
 });
 
@@ -48,9 +57,9 @@ function injectScript(file) {
 
 // 注入脚本
 injectScript('functionScripts/webpackHook.js');
-// injectScript('functionScripts/fetchHook.js');
 injectScript('functionScripts/adsBlock.js');
 injectScript('functionScripts/buttonDraw.js');
+injectScript('functionScripts/alertFunc.js');
 
 
 

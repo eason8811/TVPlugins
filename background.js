@@ -1,7 +1,7 @@
-let checkBoxIDList = ['adsBlock', 'toolsButton', 'toolsButtonWidth']
+let eventList = ['adsBlock', 'toolsButton', 'toolsButtonWidth', 'setAlert']
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.key && checkBoxIDList.includes(request.key)) {
+    if (request.key) {
         // 获取当前活动的标签页
         chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
             // 将消息发送给 content.js

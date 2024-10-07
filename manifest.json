@@ -12,7 +12,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "functionScripts/*"
+        "functionScripts/*",
+        "templates/*"
       ],
       "matches": [
         "https://cn.tradingview.com/*",

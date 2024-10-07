@@ -4,113 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resizable Rectangle on Canvas</title>
-    <style>
-        canvas {
-            border: 1px solid black;
-        }
-    </style>
-    <link href="https://static.tradingview.com/static/bundles/20162.ed706fda24a8aae7cd3e.js" as="script" rel="preload">
+    <link rel="stylesheet" href="css/88488.css">
+    <link rel="stylesheet" href="css/12653.css">
+    <link rel="stylesheet" href="css/44524.css">
+    <link rel="stylesheet" href="css/97384.css">
+    <link rel="stylesheet" href="css/17175.css">
+    <link rel="stylesheet" href="css/75816.css">
+    <link rel="stylesheet" href="css/78794.css">
+    <link rel="stylesheet" href="css/48012.css">
+    <link rel="stylesheet" href="css/21356.css">
+    <link rel="stylesheet" href="css/25480.css">
+    <link rel="stylesheet" href="css/58985.css">
+    <link rel="stylesheet" href="css/29800.css">
+    <link rel="stylesheet" href="css/23141.css">
+    <link rel="stylesheet" href="css/95083.css">
+    <link rel="stylesheet" href="css/82421.css">
+    <link rel="stylesheet" href="css/67158.css">
+    <link rel="stylesheet" href="css/79873.css">
+    <link rel="stylesheet" href="css/36299.css">
+    <link rel="stylesheet" href="css/23573.css">
+    <link rel="stylesheet" href="css/88411.css">
+    <link rel="stylesheet" href="css/40667.css">
+    <link rel="stylesheet" href="css/33828.css">
+    <link rel="stylesheet" href="css/85775.css">
+    <link rel="stylesheet" href="css/32277.css">
+    <link rel="stylesheet" href="css/13298.css">
+    <link rel="stylesheet" href="css/83952.css">
+    <link rel="stylesheet" href="css/45367.css">
+    <link rel="stylesheet" href="css/34767.css">
+    <link rel="stylesheet" href="css/1833.css">
 </head>
-<body>
-    <canvas id="myCanvas" width="500" height="400"></canvas>
-    <script>
-        const canvas = document.getElementById('myCanvas');
-        const ctx = canvas.getContext('2d');
-
-        // 初始矩形参数
-        let rect = { x: 100, y: 100, width: 200, height: 150 };
-        const cornerSize = 10;
-        let draggingCorner = null;
-        let isDragging = false;
-
-        // 绘制背景（覆盖之前的绘图内容）
-        function drawBackground() {
-            ctx.fillStyle = 'white'; // 背景颜色，可以更改为其他颜色或图像
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        // 绘制矩形和角点
-        function draw() {
-            drawBackground(); // 先绘制背景，覆盖之前的内容
-
-            ctx.fillStyle = 'rgba(0, 150, 250, 0.5)';
-            ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-
-            // 画矩形的四个角点，用于缩放
-            ctx.fillStyle = 'rgba(255, 0, 0, 1)';
-            ctx.fillRect(rect.x - cornerSize / 2, rect.y - cornerSize / 2, cornerSize, cornerSize); // 左上
-            ctx.fillRect(rect.x + rect.width - cornerSize / 2, rect.y - cornerSize / 2, cornerSize, cornerSize); // 右上
-            ctx.fillRect(rect.x - cornerSize / 2, rect.y + rect.height - cornerSize / 2, cornerSize, cornerSize); // 左下
-            ctx.fillRect(rect.x + rect.width - cornerSize / 2, rect.y + rect.height - cornerSize / 2, cornerSize, cornerSize); // 右下
-        }
-
-        // 检查鼠标是否在角点上
-        function isMouseInCorner(mouseX, mouseY) {
-            const corners = [
-                { x: rect.x, y: rect.y }, // 左上
-                { x: rect.x + rect.width, y: rect.y }, // 右上
-                { x: rect.x, y: rect.y + rect.height }, // 左下
-                { x: rect.x + rect.width, y: rect.y + rect.height } // 右下
-            ];
-
-            for (let i = 0; i < corners.length; i++) {
-                const corner = corners[i];
-                if (mouseX > corner.x - cornerSize / 2 &&
-                    mouseX < corner.x + cornerSize / 2 &&
-                    mouseY > corner.y - cornerSize / 2 &&
-                    mouseY < corner.y + cornerSize / 2) {
-                    return i; // 返回角点的索引
-                }
-            }
-            return null;
-        }
-
-        // 处理鼠标按下事件
-        canvas.addEventListener('mousedown', (e) => {
-            const mousePos = { x: e.offsetX, y: e.offsetY };
-            draggingCorner = isMouseInCorner(mousePos.x, mousePos.y);
-            if (draggingCorner !== null) {
-                isDragging = true;
-            }
-        });
-
-        // 处理鼠标移动事件
-        canvas.addEventListener('mousemove', (e) => {
-            if (isDragging && draggingCorner !== null) {
-                const mousePos = { x: e.offsetX, y: e.offsetY };
-                switch (draggingCorner) {
-                    case 0: // 左上角
-                        rect.width += rect.x - mousePos.x;
-                        rect.height += rect.y - mousePos.y;
-                        rect.x = mousePos.x;
-                        rect.y = mousePos.y;
-                        break;
-                    case 1: // 右上角
-                        rect.width = mousePos.x - rect.x;
-                        rect.height += rect.y - mousePos.y;
-                        rect.y = mousePos.y;
-                        break;
-                    case 2: // 左下角
-                        rect.width += rect.x - mousePos.x;
-                        rect.x = mousePos.x;
-                        rect.height = mousePos.y - rect.y;
-                        break;
-                    case 3: // 右下角
-                        rect.width = mousePos.x - rect.x;
-                        rect.height = mousePos.y - rect.y;
-                        break;
-                }
-                draw();
-            }
-        });
-
-        // 处理鼠标释放事件
-        canvas.addEventListener('mouseup', () => {
-            isDragging = false;
-            draggingCorner = null;
-        });
-
-        draw();
-    </script>
+<body style="background-color: #1f222d; height: 350px; width: 300px; margin: 0; padding: 0; overflow: hidden;">
+<div id="tooltip-root-element">
+    <div id="common-tooltip-wrapper"
+         class="common-tooltip-EJBD96zX common-tooltip--horizontal-EJBD96zX common-tooltip--direction_normal-EJBD96zX"
+         style="left: 313px; bottom: 644px; width: 139px;">
+        <div class="common-tooltip__ear-holder-EJBD96zX common-tooltip__ear-holder--above-EJBD96zX">
+            <div class="common-tooltip__body-EJBD96zX js-tooltip-body common-tooltip__body--with-hotkey-EJBD96zX common-tooltip__body--no-buttons-EJBD96zX"
+                 style="left: 0px; width: 139px;">
+                <div class="common-tooltip__hotkey-text-EJBD96zX">创建警报</div>
+                <div class="common-tooltip__hotkey-block-EJBD96zX common-tooltip__hotkey-block--divider-EJBD96zX"><span
+                        class="common-tooltip__hotkey-button-EJBD96zX">Alt</span><span
+                        class="common-tooltip__plus-sign-EJBD96zX">+</span><span
+                        class="common-tooltip__hotkey-button-EJBD96zX">A</span></div>
+            </div>
+        </div>
+        <div class="common-tooltip__button-container-EJBD96zX" style="left: 0px;"></div>
+    </div>
+</div>
 </body>
 </html>
