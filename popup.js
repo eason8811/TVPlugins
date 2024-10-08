@@ -316,9 +316,12 @@ function eventListenerAdder(element, event, callback) {
     eventListenerAdder(setAlertButton, 'click', function () {
         fetch('/templates/setAlert.html')
             .then(respond => respond.text())
-            .then(data => {
-                // let template = data.replace(/ {2,}|[\r\n]+/g, '');
-                sendMessage2Background('setAlert', {'template': data});
-            })
+            .then(template => {
+                fetch('/templates/setAlertCssJs.html')
+                    .then(respond => respond.text())
+                    .then(css => {
+                        sendMessage2Background('setAlert', {'template': template, 'css': css});
+                    });
+            });
     })
 })();
