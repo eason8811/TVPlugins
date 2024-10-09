@@ -1,56 +1,63 @@
 (function listenAlertSet() {
     function activateOriginAlertSetter(event) {
-        let alertButton = document.querySelector('button[aria-label="警报"]');
-        alertButton.click();
+        let pageList = document.querySelectorAll('div[class="widgetbar-pagescontent"] > div');
+        let selectedPageIndex = -1;
+        for (let i = 0; i < pageList.length; i++) {
+            if (pageList[i].classList.value === "widgetbar-page active") {
+                selectedPageIndex = i;
+                break;
+            }
+        }
+        let openAlertPage = document.querySelector('button[aria-label="警报"]');
+
+        const observer = new MutationObserver((mutationsList, observer) => {
+            for (const mutation of mutationsList) {
+                if (mutation.target.classList.value === "widgetbar-widgetbody" && mutation.addedNodes[0].classList.value === "wrapper-G90Hl2iS") {
+                    let setAlertButton = document.querySelector('div[data-name="set-alert-button"]');
+                    setAlertButton.click();
+                    openAlertPage.click();
+                    observer.disconnect();
+                    if (selectedPageIndex !== -1) {
+                        document.querySelectorAll('div[data-name="right-toolbar"] button')[selectedPageIndex].click();
+                    }
+                    break;
+                }
+            }
+        });
+        let observeNode = document.querySelector('div[class="widgetbar-pagescontent"]');
+        observer.observe(observeNode, {childList: true, subtree: true});
+        openAlertPage.click();
     }
 
     window.addEventListener('setAlert', activateOriginAlertSetter);
 })();
 
-function nn() {
-    // 保存每个元素的原始 style
-    const originalStyles = new Map();
-
-    // 获取要监听的目标元素
-    const targetElement = document.querySelector('div[class="js-rootresizer__contents layout-with-border-radius"]');
-
-    // 保存初始样式的函数
-    function saveInitialStyles(element) {
-        originalStyles.set(element, element.style.cssText);
-        // 如果需要对子孙元素进行处理，递归保存它们的初始样式
-        element.querySelectorAll('*').forEach((child) => {
-            originalStyles.set(child, child.style.cssText);
-        });
+class Alert {
+    constructor(symbol, condition, triggerCondition, expire, alertName, alertMessage) {
+        this.symbol = symbol;
+        this.condition = condition;
+        this.triggerCondition = triggerCondition;
+        this.expire = expire;
+        this.alertName = alertName;
+        this.alertMessage = alertMessage;
     }
 
-    // 调用函数保存初始样式
-    saveInitialStyles(targetElement);
+    Condition = class {
+        constructor(haveSubTarget, alertTarget, subTarget, conditionType, beTouchedElement, beTouchedElementValue) {
+            this.haveSubTarget = haveSubTarget;
+            this.alertTarget = alertTarget;
+            this.subTarget = subTarget;
+            this.conditionType = conditionType;
+            this.beTouchedElement = beTouchedElement;
+            this.beTouchedElementValue = beTouchedElementValue;
+        }
+    }
 
-    // 创建 MutationObserver 实例
-    const observer = new MutationObserver((mutationsList) => {
-        mutationsList.forEach((mutation) => {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                const target = mutation.target;
-                const oldStyle = originalStyles.get(target);  // 获取原来的样式
-                const newStyle = target.style.cssText;  // 当前的新样式
+    TriggerCondition = class {
+        constructor(triggerType) {
+            this.triggerType = triggerType;
+        }
+    }
 
-                console.log(`Element: `, target);
-                console.log(`Old style: ${oldStyle}`);
-                console.log(`New style: ${newStyle}`);
 
-                // 更新已保存的样式为最新样式
-                originalStyles.set(target, newStyle);
-            }
-        });
-    });
-
-    // 配置 MutationObserver
-    const config = {
-        attributes: true,               // 监听属性变化
-        attributeFilter: ['style'],     // 仅监听 'style' 属性
-        subtree: true                   // 监听子孙节点的变化
-    };
-
-    // 开始观察目标元素及其子孙元素
-    observer.observe(targetElement, config);
 }
