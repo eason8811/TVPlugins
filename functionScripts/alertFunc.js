@@ -125,10 +125,11 @@ function getTrueAmount(obj) {
                             }
                         }
 
-                        checkBoxList[i].querySelector('label').addEventListener('click', onclickNoteCheckboxLabel);
                         if (i === 3 && noteTypeInfo['toast'] !== checkBoxList[i].querySelector('input').checked) {
+                            checkBoxList[i].querySelector('label').addEventListener('click', onclickNoteCheckboxLabel);
                             checkBoxList[i].querySelector('label').click();
                         } else if (i === 13 && noteTypeInfo['sound'] !== checkBoxList[i].querySelector('input').checked) {
+                            checkBoxList[i].querySelector('label').addEventListener('click', onclickNoteCheckboxLabel);
                             checkBoxList[i].querySelector('label').click();
                         }
                     }
