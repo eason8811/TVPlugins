@@ -4,6 +4,26 @@ window.ExpireType = {
 }
 window.currentAlertExpireType = window.ExpireType.expire;
 
+function getTrueAmount(obj) {
+    if (typeof obj === 'number') {
+        return obj ? 1 : 0;
+    } else if (typeof obj === 'object') {
+        let amount = 0;
+        for (let key in obj) {
+            if (obj[key])
+                amount++;
+        }
+        return amount;
+    } else if (obj instanceof Array) {
+        let amount = 0;
+        for (let i = 0; i < obj.length; i++) {
+            if (obj[i])
+                amount++;
+        }
+        return amount;
+    }
+}
+
 (function listenAlertSet() {
     let originExpireDate;
 
@@ -70,7 +90,7 @@ window.currentAlertExpireType = window.ExpireType.expire;
                             let expireDateContent = document.querySelector('button[aria-controls="alert-editor-expiration-popup"] > span[class="content-H6_2ZGVv"]');
                             if (setExpireDateButton === document.querySelector('button[class="btn-fpDXgGC1 button-D4RPB3ZC medium-D4RPB3ZC black-D4RPB3ZC primary-D4RPB3ZC apply-overflow-tooltip apply-overflow-tooltip--check-children-recursively apply-overflow-tooltip--allow-text apply-common-tooltip"]')) {
                                 expireDateContent.innerText = document.querySelector('button[class="btn-fpDXgGC1 button-D4RPB3ZC medium-D4RPB3ZC black-D4RPB3ZC primary-D4RPB3ZC apply-overflow-tooltip apply-overflow-tooltip--check-children-recursively apply-overflow-tooltip--allow-text apply-common-tooltip"] > span[class="content-D4RPB3ZC"]').innerText;
-                            }else {
+                            } else {
                                 expireDateContent.innerText = originExpireDate;
                             }
                         });
@@ -81,10 +101,58 @@ window.currentAlertExpireType = window.ExpireType.expire;
             switcherObserver.observe(switcherObserverNode, {childList: true, subtree: true});
         }
 
+
+        function changeNotePage(event) {
+            let noteObserver = new MutationObserver((mutationsList, observer) => {
+                noteObserver.disconnect();
+                let checkBoxList = document.querySelectorAll('div[class="content-XZUCVcPz"] > div');
+                let noteTypeInfo = window.getCache('noteType');
+                for (let i = 0; i < checkBoxList.length; i++) {
+                    if (!(i >= 3 && i <= 5 || i >= 13 && i <= 15)) {
+                        checkBoxList[i].style.display = 'none';
+                    } else {
+
+                        function onclickNoteCheckboxLabel(event) {
+                            let label = event.currentTarget;
+                            if (label.parentElement.parentElement === checkBoxList[3]) {
+                                noteTypeInfo['toast'] = !noteTypeInfo['toast'];
+                                window.setCache('noteType', noteTypeInfo);
+                                document.querySelector('span[aria-label*="通知方式"]').innerText = getTrueAmount(noteTypeInfo);
+                            } else if (label.parentElement.parentElement === checkBoxList[13]) {
+                                noteTypeInfo['toast'] = !noteTypeInfo['sound'];
+                                window.setCache('noteType', noteTypeInfo);
+                                document.querySelector('span[aria-label*="通知方式"]').innerText = getTrueAmount(noteTypeInfo);
+                            }
+                        }
+
+                        checkBoxList[i].querySelector('label').addEventListener('click', onclickNoteCheckboxLabel);
+                        if (i === 3 && noteTypeInfo['toast'] !== checkBoxList[i].querySelector('input').checked) {
+                            checkBoxList[i].querySelector('label').click();
+                        } else if (i === 13 && noteTypeInfo['sound'] !== checkBoxList[i].querySelector('input').checked) {
+                            checkBoxList[i].querySelector('label').click();
+                        }
+                    }
+                }
+            });
+            let NoteObserverNode = document.querySelector('div[class="content-XZUCVcPz"]');
+            noteObserver.observe(NoteObserverNode, {childList: true});
+        }
+
         const observer = new MutationObserver((mutationsList, observer) => {
             const innerObserver = new MutationObserver((innerMutationsList, innerObserver) => {
                 originExpireDate = document.querySelector('span[class="content-H6_2ZGVv"]').innerText;
                 document.querySelector('button[aria-controls="alert-editor-expiration-popup"]').addEventListener('click', changeExpireType);
+
+                let noteAmountSpan = document.querySelector('span[aria-label*="通知方式"]');
+                if (!window.getCache('noteType')) {
+                    window.setCache('noteType', {
+                        'toast': true,
+                        'sound': true,
+                    });
+                }
+                noteAmountSpan.innerText = getTrueAmount(window.getCache('noteType'));
+                document.querySelector('#alert-dialog-tabs__notifications').addEventListener('click', changeNotePage);
+
                 innerObserver.disconnect();
             });
             let innerObserverNode = document.querySelector('#overlap-manager-root');
