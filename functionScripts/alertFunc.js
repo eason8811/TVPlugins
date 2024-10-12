@@ -113,14 +113,14 @@ function getTrueAmount(obj) {
                     } else {
 
                         function onclickNoteCheckboxLabel(event) {
-                            event.stopImmediatePropagation();
+                            // event.preventDefault();
                             let label = event.currentTarget;
-                            if (label.parentElement.parentElement === checkBoxList[3]) {
+                            if (label === checkBoxList[3].querySelector('label') && event.target.tagName === 'INPUT') {
                                 noteTypeInfo['toast'] = !noteTypeInfo['toast'];
                                 window.setCache('noteType', noteTypeInfo);
                                 document.querySelector('span[aria-label*="通知方式"]').innerText = getTrueAmount(noteTypeInfo);
-                            } else if (label.parentElement.parentElement === checkBoxList[13]) {
-                                noteTypeInfo['toast'] = !noteTypeInfo['sound'];
+                            } else if (label === checkBoxList[13].querySelector('label') && event.target.tagName === 'INPUT') {
+                                noteTypeInfo['sound'] = !noteTypeInfo['sound'];
                                 window.setCache('noteType', noteTypeInfo);
                                 document.querySelector('span[aria-label*="通知方式"]').innerText = getTrueAmount(noteTypeInfo);
                             }
@@ -131,8 +131,12 @@ function getTrueAmount(obj) {
                         } else if (i === 13 && noteTypeInfo['sound'] !== checkBoxList[i].querySelector('input').checked) {
                             checkBoxList[i].querySelector('label').click();
                         }
-                        if (i === 3 || i === 13)
+                        if (i === 3 || i === 13) {
                             checkBoxList[i].querySelector('label').addEventListener('click', onclickNoteCheckboxLabel);
+                            document.querySelector('#alert-dialog-tabs__settings').addEventListener('click', () => {
+                                checkBoxList[i].querySelector('label').removeEventListener('click', onclickNoteCheckboxLabel);
+                            });
+                        }
                     }
                 }
             });
