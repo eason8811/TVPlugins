@@ -113,6 +113,7 @@ function getTrueAmount(obj) {
                     } else {
 
                         function onclickNoteCheckboxLabel(event) {
+                            event.stopImmediatePropagation();
                             let label = event.currentTarget;
                             if (label.parentElement.parentElement === checkBoxList[3]) {
                                 noteTypeInfo['toast'] = !noteTypeInfo['toast'];
@@ -126,12 +127,12 @@ function getTrueAmount(obj) {
                         }
 
                         if (i === 3 && noteTypeInfo['toast'] !== checkBoxList[i].querySelector('input').checked) {
-                            checkBoxList[i].querySelector('label').addEventListener('click', onclickNoteCheckboxLabel);
                             checkBoxList[i].querySelector('label').click();
                         } else if (i === 13 && noteTypeInfo['sound'] !== checkBoxList[i].querySelector('input').checked) {
-                            checkBoxList[i].querySelector('label').addEventListener('click', onclickNoteCheckboxLabel);
                             checkBoxList[i].querySelector('label').click();
                         }
+                        if (i === 3 || i === 13)
+                            checkBoxList[i].querySelector('label').addEventListener('click', onclickNoteCheckboxLabel);
                     }
                 }
             });

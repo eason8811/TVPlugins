@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "我的浏览器插件",
+  "name": "TV 面板",
   "version": "1.0",
-  "description": "这是一个示例插件。",
+  "description": "针对 TradingView 的多功能插件",
   "permissions": [
     "storage",
     "activeTab",
@@ -49,14 +49,14 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "img.png",
-      "48": "img.png",
-      "128": "img.png"
+      "16": "icon.svg",
+      "48": "icon.svg",
+      "128": "icon.svg"
     }
   },
   "icons": {
-    "16": "img.png",
-    "48": "img.png",
-    "128": "img.png"
+    "16": "icon.svg",
+    "48": "icon.svg",
+    "128": "icon.svg"
   }
 }

@@ -4,9 +4,10 @@ let defaultWidth = window.getCache('toolsButtonWidth') ? window.getCache('toolsB
 let defaultHeight = defaultWidth / 2;
 let defaultRadius = 10;
 let originCursor = null;    // 原来的鼠标样式
+let mouseAlreadyDown = false;  // 鼠标是否已经按下
 
 window.addEventListener('localStorgeChanged', (event) => {
-    if (event.detail.key === 'toolsButtonWidth') {
+    if (event.detail.key === 'toolsButtonWidth' && window.getCache('toolsButton')) {
         defaultWidth = event.detail.value;
         defaultHeight = defaultWidth / 2;
         for (let key in window.buttonList) {
@@ -399,10 +400,12 @@ function mouseDownEvent(event) {
         if (buttonItem.getInsideOrder(mouseX, mouseY) && !buttonItem.opened) {
             buttonItem.profitColor = darkenRGBA(buttonItem.profitColor, 0.8);
             buttonItem.draw();
+            mouseAlreadyDown = true;
             break;
         } else if (buttonItem.getInsideCancel(mouseX, mouseY) && buttonItem.opened) {
             buttonItem.stopColor = darkenRGBA(buttonItem.stopColor, 0.8);
             buttonItem.draw();
+            mouseAlreadyDown = true;
             break;
         }
     }
@@ -410,10 +413,14 @@ function mouseDownEvent(event) {
 
 function mouseUpEvent(event) {
     for (let key in window.buttonList) {
-        const buttonItem = window.buttonList[key];
-        buttonItem.profitColor = buttonItem.originProfitColor;
-        buttonItem.stopColor = buttonItem.originStopColor;
-        buttonItem.draw();
+        if (mouseAlreadyDown) {
+            const buttonItem = window.buttonList[key];
+            buttonItem.profitColor = buttonItem.originProfitColor;
+            buttonItem.stopColor = buttonItem.originStopColor;
+            buttonItem.draw();
+            mouseAlreadyDown = false;
+            break;
+        }
     }
 }
 
