@@ -36,24 +36,75 @@ function getTrueAmount(obj) {
                 break;
             }
         }
-        let openAlertPage = document.querySelector('button[aria-label="警报"]');
+        let openAlertPageButton = document.querySelector('button[aria-label="警报"]');
 
-        function openSetterPage(mutationsList, observer) {
-            for (const mutation of mutationsList) {
-                if (mutation.target.classList.value === "widgetbar-widgetbody" && mutation.addedNodes.length > 0 && mutation.addedNodes[0].classList.value === "wrapper-G90Hl2iS") {
-                    let setAlertButton = document.querySelector('div[data-name="set-alert-button"]');
-                    setAlertButton.click();
-                    openAlertPage.click();
-                    observer.disconnect();
-                    if (selectedPageIndex !== -1) {
-                        document.querySelectorAll('div[data-name="right-toolbar"] button')[selectedPageIndex].click();
+        function defineNoteAmountProperty(noteAmountNode, noteTypeInfo) {
+            if (!noteAmountNode.hasOwnProperty('noteAmountValue')) {
+                noteAmountNode.noteAmountValue = getTrueAmount(noteTypeInfo);
+                Object.defineProperty(noteAmountNode, 'nodeValue', {
+                    get() {
+                        return this.noteAmountValue;
+                    },
+                    set(value) {
+                        value = getTrueAmount(noteTypeInfo);
+                        this.noteAmountValue = value;
+                        this.textContent = value;
                     }
-                    break;
+                })
+            }
+            noteAmountNode.noteAmountValue = getTrueAmount(noteTypeInfo);
+            noteAmountNode.textContent = getTrueAmount(noteTypeInfo);
+        }
+
+        function afterOpenNotePage(noteMutationsList, noteObserver) {
+            // 容器变化后，隐藏无效的通知方式，并为上方通知的方式数目添加相应的变化时间，以反应通知方式的数目
+            noteObserver.disconnect();
+            let checkBoxList = document.querySelectorAll('div[class="content-XZUCVcPz"] > div');
+            let noteTypeInfo = window.getCache('noteType');
+            for (let i = 0; i < checkBoxList.length; i++) {
+                if (!(i >= 3 && i <= 5 || i >= 13 && i <= 15)) {
+                    checkBoxList[i].style.display = 'none';
+                } else {
+
+                    function onclickNoteCheckboxLabel(event) {
+                        // 当点击通知方式的勾选框时，实时更新通知方式数目
+                        let label = event.currentTarget;
+                        let noteAmountNode = document.querySelector('span[aria-label*="通知方式"]').firstChild;
+                        if (label === checkBoxList[3].querySelector('label') && event.target.tagName === 'INPUT') {
+                            noteTypeInfo['toast'] = !noteTypeInfo['toast'];
+                            window.setCache('noteType', noteTypeInfo);
+                            defineNoteAmountProperty(noteAmountNode, noteTypeInfo);
+                        } else if (label === checkBoxList[13].querySelector('label') && event.target.tagName === 'INPUT') {
+                            noteTypeInfo['sound'] = !noteTypeInfo['sound'];
+                            window.setCache('noteType', noteTypeInfo);
+                            defineNoteAmountProperty(noteAmountNode, noteTypeInfo);
+                        }
+                    }
+
+                    if (i === 3 && noteTypeInfo['toast'] !== checkBoxList[i].querySelector('input').checked) {
+                        checkBoxList[i].querySelector('label').click();
+                    } else if (i === 13 && noteTypeInfo['sound'] !== checkBoxList[i].querySelector('input').checked) {
+                        checkBoxList[i].querySelector('label').click();
+                    }
+                    if (i === 3 || i === 13) {
+                        checkBoxList[i].querySelector('label').addEventListener('click', onclickNoteCheckboxLabel);
+                        document.querySelector('#alert-dialog-tabs__settings').addEventListener('click', () => {
+                            checkBoxList[i].querySelector('label').removeEventListener('click', onclickNoteCheckboxLabel);
+                        });
+                    }
                 }
             }
         }
 
+        function changeNotePage(event) {
+            // 通知按钮被点击后，监听容器的变化，并隐藏无效的通知方式
+            let noteObserver = new MutationObserver(afterOpenNotePage);
+            let NoteObserverNode = document.querySelector('div[class="content-XZUCVcPz"]');
+            noteObserver.observe(NoteObserverNode, {childList: true});
+        }
+
         function changeExpireType(event) {
+            // 当打开过期时间调整器时，替换无限制警报的按钮点击事件
             const switcherObserver = new MutationObserver((mutationsList, observer) => {
 
                 switcherObserver.disconnect();
@@ -67,6 +118,7 @@ function getTrueAmount(obj) {
                         expireTypeSwitcher.innerHTML = expireTypeSwitcherInnerHTML
                             .replace('switchView-CtnpmPzP small-CtnpmPzP', 'switchView-CtnpmPzP small-CtnpmPzP checked-CtnpmPzP')
                             .replace('input-fwE97QDf', 'input-fwE97QDf checked-fwE97QDf');
+                        document.querySelector('button[aria-controls="alert-editor-expiration-popup"] > span[class="content-H6_2ZGVv"]').innerText = '无限制警报';
                     } else {
                         expireTypeSwitcher.innerHTML = expireTypeSwitcherInnerHTML;
                     }
@@ -101,77 +153,78 @@ function getTrueAmount(obj) {
             switcherObserver.observe(switcherObserverNode, {childList: true, subtree: true});
         }
 
-
-        function changeNotePage(event) {
-            let noteObserver = new MutationObserver((mutationsList, observer) => {
-                noteObserver.disconnect();
-                let checkBoxList = document.querySelectorAll('div[class="content-XZUCVcPz"] > div');
-                let noteTypeInfo = window.getCache('noteType');
-                for (let i = 0; i < checkBoxList.length; i++) {
-                    if (!(i >= 3 && i <= 5 || i >= 13 && i <= 15)) {
-                        checkBoxList[i].style.display = 'none';
-                    } else {
-
-                        function onclickNoteCheckboxLabel(event) {
-                            // event.preventDefault();
-                            let label = event.currentTarget;
-                            if (label === checkBoxList[3].querySelector('label') && event.target.tagName === 'INPUT') {
-                                noteTypeInfo['toast'] = !noteTypeInfo['toast'];
-                                window.setCache('noteType', noteTypeInfo);
-                                document.querySelector('span[aria-label*="通知方式"]').innerText = getTrueAmount(noteTypeInfo);
-                            } else if (label === checkBoxList[13].querySelector('label') && event.target.tagName === 'INPUT') {
-                                noteTypeInfo['sound'] = !noteTypeInfo['sound'];
-                                window.setCache('noteType', noteTypeInfo);
-                                document.querySelector('span[aria-label*="通知方式"]').innerText = getTrueAmount(noteTypeInfo);
-                            }
-                        }
-
-                        if (i === 3 && noteTypeInfo['toast'] !== checkBoxList[i].querySelector('input').checked) {
-                            checkBoxList[i].querySelector('label').click();
-                        } else if (i === 13 && noteTypeInfo['sound'] !== checkBoxList[i].querySelector('input').checked) {
-                            checkBoxList[i].querySelector('label').click();
-                        }
-                        if (i === 3 || i === 13) {
-                            checkBoxList[i].querySelector('label').addEventListener('click', onclickNoteCheckboxLabel);
-                            document.querySelector('#alert-dialog-tabs__settings').addEventListener('click', () => {
-                                checkBoxList[i].querySelector('label').removeEventListener('click', onclickNoteCheckboxLabel);
-                            });
-                        }
-                    }
-                }
-            });
-            let NoteObserverNode = document.querySelector('div[class="content-XZUCVcPz"]');
-            noteObserver.observe(NoteObserverNode, {childList: true});
+        function onclickAlertSettingButton(event) {
+            // 当点击警报设置按钮时，添加监听器
+            const innerObserver = new MutationObserver(afterOpenAlertPage);
+            let innerObserverNode = document.querySelector('#overlap-manager-root');
+            innerObserver.observe(innerObserverNode, {childList: true, subtree: true});
         }
 
-        const observer = new MutationObserver((mutationsList, observer) => {
-            const innerObserver = new MutationObserver((innerMutationsList, innerObserver) => {
-                originExpireDate = document.querySelector('span[class="content-H6_2ZGVv"]').innerText;
-                document.querySelector('button[aria-controls="alert-editor-expiration-popup"]').addEventListener('click', changeExpireType);
+        function afterOpenAlertPage(innerMutationsList, innerObserver) {
+            // 为警报设置按钮添加事件监听器，当点击时，重新监听容器变化
+            document.querySelector('#alert-dialog-tabs__settings').addEventListener('click', onclickAlertSettingButton)
+            // 记录到期时间并添加监听器
+            originExpireDate = document.querySelector('span[class="content-H6_2ZGVv"]').innerText;
+            document.querySelector('button[aria-controls="alert-editor-expiration-popup"]').addEventListener('click', changeExpireType);
+            let expireDateContent = document.querySelector('button[aria-controls="alert-editor-expiration-popup"] > span[class="content-H6_2ZGVv"]');
+            if (!window.currentAlertExpireType) {
+                expireDateContent.innerText = '无限制警报';
+            } else {
+                expireDateContent.innerText = originExpireDate;
+            }
 
-                let noteAmountSpan = document.querySelector('span[aria-label*="通知方式"]');
-                if (!window.getCache('noteType')) {
-                    window.setCache('noteType', {
-                        'toast': true,
-                        'sound': true,
-                    });
+            let noteAmountSpan = document.querySelector('span[aria-label*="通知方式"]');
+            if (!window.getCache('noteType')) {
+                window.setCache('noteType', {
+                    'toast': true,
+                    'sound': true,
+                });
+            }
+            noteAmountSpan.innerText = getTrueAmount(window.getCache('noteType'));
+            // 为通知按钮添加事件监听器，当点击时，修改通知页面，调用回调函数 changeNotePage
+            document.querySelector('#alert-dialog-tabs__notifications').addEventListener('click', changeNotePage);
+
+            let submitButton = document.querySelector('button[data-overflow-tooltip-text*="创建"]');
+            let cancelButton = document.querySelector('button[data-overflow-tooltip-text*="取消"]');
+            submitButton.addEventListener('click', () => {
+                console.log('提交被取消');
+                cancelButton.click();
+            })
+            innerObserver.disconnect();
+        }
+
+        function openSetterPage(mutationsList, observer) {
+            // 打开添加警报页面，并恢复右边bar为原来的状态
+            for (const mutation of mutationsList) {
+                if (mutation.target.classList.value === "widgetbar-widgetbody" && mutation.addedNodes.length > 0 && mutation.addedNodes[0].classList.value === "wrapper-G90Hl2iS") {
+                    let setAlertButton = document.querySelector('div[data-name="set-alert-button"]');
+                    setAlertButton.click();
+                    openAlertPageButton.click();
+                    observer.disconnect();
+                    if (selectedPageIndex !== -1) {
+                        document.querySelectorAll('div[data-name="right-toolbar"] button')[selectedPageIndex].click();
+                    }
+                    break;
                 }
-                noteAmountSpan.innerText = getTrueAmount(window.getCache('noteType'));
-                document.querySelector('#alert-dialog-tabs__notifications').addEventListener('click', changeNotePage);
+            }
+        }
 
-                innerObserver.disconnect();
-            });
+        function afterOpenRightBarPage(mutationsList, observer) {
+            // 检测警报设置页面是否被打开，如打开，执行回调函数 afterOpenAlertPage
+            const innerObserver = new MutationObserver(afterOpenAlertPage);
             let innerObserverNode = document.querySelector('#overlap-manager-root');
             innerObserver.observe(innerObserverNode, {childList: true, subtree: true});
             openSetterPage(mutationsList, observer);
-        });
+        }
 
+        // 检测右边栏是否被打开，如打开，执行回调函数 afterOpenRightBarPage
+        const observer = new MutationObserver(afterOpenRightBarPage);
         let observeNode = document.querySelector('div[class="widgetbar-pagescontent"]');
         observer.observe(observeNode, {childList: true, subtree: true});
         if (selectedPageIndex === 1) {
             document.querySelector('div[data-name="set-alert-button"]').click();
         } else {
-            openAlertPage.click();
+            openAlertPageButton.click();
         }
     }
 
