@@ -160,6 +160,53 @@ function getTrueAmount(obj) {
             innerObserver.observe(innerObserverNode, {childList: true, subtree: true});
         }
 
+        function onclickSubmitButton(event) {
+            let submitButton = document.querySelector('button[data-overflow-tooltip-text*="创建"]');
+            let cancelButton = document.querySelector('button[data-overflow-tooltip-text*="取消"]');
+            document.querySelector('#alert-dialog-tabs__settings').click();
+
+            let symbol = document.querySelector('fieldset[class="container-Fddz5wLp symbolsRow-INZ15hnz"] span[class="label-QIZwlRt3 apply-overflow-tooltip"]').innerText;
+            let conditionSpanList = document.querySelectorAll('fieldset[class="container-Fddz5wLp"] span[class="label-QIZwlRt3 apply-overflow-tooltip"]');
+
+            let haveSubTarget = conditionSpanList.length > 3;
+            let alertTarget = conditionSpanList[0].innerText;
+            let subTarget = haveSubTarget ? conditionSpanList[1].innerText : null;
+            let conditionType = conditionSpanList[haveSubTarget ? 2 : 1].innerText;
+            let beTouchedElement = conditionSpanList[haveSubTarget ? 3 : 2].innerText;
+            let beTouchedElementValue = document.querySelector('input[data-property-id="end-band-range"]').value;
+            let condition = new Alert.Condition(haveSubTarget, alertTarget, subTarget, conditionType, beTouchedElement, beTouchedElementValue);
+
+            let triggerButtonList = document.querySelectorAll('fieldset[class="container-Fddz5wLp"] button[data-name]');
+            let checkedTriggerButton = triggerButtonList[0];
+            for (let triggerButton of triggerButtonList) {
+                if (triggerButton.getAttribute('aria-checked') === 'true') {
+                    checkedTriggerButton = triggerButton;
+                    break;
+                }
+            }
+            let triggerType = checkedTriggerButton.getAttribute('data-name');
+            let triggerCondition = new Alert.TriggerCondition(triggerType);
+
+            let expireType = window.currentAlertExpireType;
+            let expireDate = !expireType ? '无限制警报' : document.querySelector('button[aria-controls="alert-editor-expiration-popup"] > span[class="content-H6_2ZGVv"]').innerText;
+            let expire = new Alert.Expire(expireType, expireDate);
+
+            let alertName = document.querySelector('#alert-name').value;
+            let alertMessage = document.querySelector('#alert-message').value;
+
+            document.querySelector('#alert-dialog-tabs__notifications').click();
+            let noteInfo = {
+                'toast': window.getCache('noteType')['toast'],
+                'sound': '',
+            };
+
+            let alert = new Alert(symbol, condition, triggerCondition, expire, alertName, alertMessage, noteInfo);
+
+
+            console.log('提交被取消');
+            cancelButton.click();
+        }
+
         function afterOpenAlertPage(innerMutationsList, innerObserver) {
             // 为警报设置按钮添加事件监听器，当点击时，重新监听容器变化
             document.querySelector('#alert-dialog-tabs__settings').addEventListener('click', onclickAlertSettingButton)
@@ -185,11 +232,7 @@ function getTrueAmount(obj) {
             document.querySelector('#alert-dialog-tabs__notifications').addEventListener('click', changeNotePage);
 
             let submitButton = document.querySelector('button[data-overflow-tooltip-text*="创建"]');
-            let cancelButton = document.querySelector('button[data-overflow-tooltip-text*="取消"]');
-            submitButton.addEventListener('click', () => {
-                console.log('提交被取消');
-                cancelButton.click();
-            })
+            submitButton.addEventListener('click', onclickSubmitButton);
             innerObserver.disconnect();
         }
 
