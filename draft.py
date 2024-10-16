@@ -47,10 +47,21 @@ https://static.tradingview.com/static/bundles/martian-gun.c73c33efcfba10700d1a.m
 '''
 url_list = https_list.strip().split('\n')
 print(url_list)
-for url in tqdm(url_list):
-    response = requests.get(url)
-    data = response.content
-    file_name = url.split('/')[-1].split('.')[0]
-    with open('./media/' + file_name + '.mp3', 'wb') as f:
-        f.write(data)
+
+file_name_list = []
+temp = []
+for i in tqdm(range(len(url_list))):
+    if i % 8 == 0:
+        if len(temp) > 0:
+            file_name_list.append(temp)
+        temp = []
+    # response = requests.get(url_list[i])
+    # data = response.content
+    file_name = url_list[i].split('/')[-1].split('.')[0]
+    temp.append(file_name)
+    # with open('./media/' + file_name + '.mp3', 'wb') as f:
+    #     f.write(data)
+else:
+    file_name_list.append(temp)
+print(file_name_list)
 

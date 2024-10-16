@@ -1,8 +1,17 @@
+window.alertMediaList = [
+    ['fired', '3_notes_reverb', 'alarm_clock', 'beep_beep', 'alert_calling', 'chirpy', 'fault', 'hand_bell'],
+    ['banjo', 'droplet', 'flickering', 'hoarse', 'knock-knock', 'promise', 'trumpets', 'you-win'],
+    ['bullfrog', 'cat', 'dog', 'raven', 'rooster', 'thunder', 'water-drop', 'whale'],
+    ['attention', 'guess-what', 'hey-pssst', 'hey-take-a-look', 'hey', 'look-at-me', 'mmm-sexy', 'oh'],
+    ['applauses', 'breaking-some-glass', 'cash-register', 'chimes-power-down', 'dramatic-one-note', 'jackpot', 'man-laughing', 'martian-gun']
+]
+
 window.ExpireType = {
     'expire': true,
     'infinite': false
 }
 window.currentAlertExpireType = window.ExpireType.expire;
+let infiniteAlertText = '无限制警报';
 
 function getTrueAmount(obj) {
     if (typeof obj === 'number') {
@@ -36,7 +45,7 @@ function getTrueAmount(obj) {
                 break;
             }
         }
-        let openAlertPageButton = document.querySelector('button[aria-label="警报"]');
+        let openAlertPageButton = document.querySelector('button[data-name="alerts"]');
 
         function defineNoteAmountProperty(noteAmountNode, noteTypeInfo) {
             if (!noteAmountNode.hasOwnProperty('noteAmountValue')) {
@@ -69,7 +78,7 @@ function getTrueAmount(obj) {
                     function onclickNoteCheckboxLabel(event) {
                         // 当点击通知方式的勾选框时，实时更新通知方式数目
                         let label = event.currentTarget;
-                        let noteAmountNode = document.querySelector('span[aria-label*="通知方式"]').firstChild;
+                        let noteAmountNode = document.querySelector('#alert-dialog-tabs__notifications span[class]').firstChild;
                         if (label === checkBoxList[3].querySelector('label') && event.target.tagName === 'INPUT') {
                             noteTypeInfo['toast'] = !noteTypeInfo['toast'];
                             window.setCache('noteType', noteTypeInfo);
@@ -77,6 +86,11 @@ function getTrueAmount(obj) {
                         } else if (label === checkBoxList[13].querySelector('label') && event.target.tagName === 'INPUT') {
                             noteTypeInfo['sound'] = !noteTypeInfo['sound'];
                             window.setCache('noteType', noteTypeInfo);
+                            if (noteTypeInfo['sound'] && window.getCache('alertSoundInfo')){
+                                // 如果开启了声音提示，并且有缓存信息
+                                let alertSoundInfo = {};
+
+                            }
                             defineNoteAmountProperty(noteAmountNode, noteTypeInfo);
                         }
                     }
@@ -108,17 +122,19 @@ function getTrueAmount(obj) {
             const switcherObserver = new MutationObserver((mutationsList, observer) => {
 
                 switcherObserver.disconnect();
+
+                infiniteAlertText = document.querySelector('div[data-name="menu-inner"] label[for="unexpired-date"]').innerText;
                 let expireTypeSwitcher = document.querySelector('span[class="switcher-fwE97QDf"]');
                 let setExpireDateButtonList = document.querySelector('span[class="switcher-fwE97QDf"]').parentElement.parentElement.querySelectorAll('button[data-day], button[data-overflow-tooltip-text]');
                 let expireTypeSwitcherInnerHTML = expireTypeSwitcher.innerHTML;
                 if (event.type === 'click') {
                     event.stopPropagation();
-                    originExpireDate = document.querySelector('span[class="content-H6_2ZGVv"]').innerText !== '无限制警报' ? document.querySelector('span[class="content-H6_2ZGVv"]').innerText : originExpireDate;
+                    originExpireDate = document.querySelector('span[class="content-H6_2ZGVv"]').innerText !== infiniteAlertText ? document.querySelector('span[class="content-H6_2ZGVv"]').innerText : originExpireDate;
                     if (!window.currentAlertExpireType) {
                         expireTypeSwitcher.innerHTML = expireTypeSwitcherInnerHTML
                             .replace('switchView-CtnpmPzP small-CtnpmPzP', 'switchView-CtnpmPzP small-CtnpmPzP checked-CtnpmPzP')
                             .replace('input-fwE97QDf', 'input-fwE97QDf checked-fwE97QDf');
-                        document.querySelector('button[aria-controls="alert-editor-expiration-popup"] > span[class="content-H6_2ZGVv"]').innerText = '无限制警报';
+                        document.querySelector('button[aria-controls="alert-editor-expiration-popup"] > span[class="content-H6_2ZGVv"]').innerText = infiniteAlertText;
                     } else {
                         expireTypeSwitcher.innerHTML = expireTypeSwitcherInnerHTML;
                     }
@@ -126,9 +142,9 @@ function getTrueAmount(obj) {
                         window.currentAlertExpireType = !window.currentAlertExpireType;
                         expireTypeSwitcher.querySelector('input').classList.toggle('checked-fwE97QDf');
                         expireTypeSwitcher.querySelector('span > span > span').classList.toggle('checked-CtnpmPzP');
-                        let expireDateContent = document.querySelector('button[aria-controls="alert-editor-expiration-popup"] > span[class="content-H6_2ZGVv"]');
+                        let expireDateContent = document.querySelectorAll('button[aria-controls] > span[class="content-H6_2ZGVv"]');
                         if (!window.currentAlertExpireType) {
-                            expireDateContent.innerText = '无限制警报';
+                            expireDateContent.innerText = infiniteAlertText;
                         } else {
                             expireDateContent.innerText = originExpireDate;
                         }
@@ -139,7 +155,7 @@ function getTrueAmount(obj) {
                             window.currentAlertExpireType = window.ExpireType.expire;
                             expireTypeSwitcher.querySelector('input').classList.toggle('checked-fwE97QDf', false);
                             expireTypeSwitcher.querySelector('span > span > span').classList.toggle('checked-CtnpmPzP', false);
-                            let expireDateContent = document.querySelector('button[aria-controls="alert-editor-expiration-popup"] > span[class="content-H6_2ZGVv"]');
+                            let expireDateContent = document.querySelectorAll('button[aria-controls] > span[class="content-H6_2ZGVv"]');
                             if (setExpireDateButton === document.querySelector('button[class="btn-fpDXgGC1 button-D4RPB3ZC medium-D4RPB3ZC black-D4RPB3ZC primary-D4RPB3ZC apply-overflow-tooltip apply-overflow-tooltip--check-children-recursively apply-overflow-tooltip--allow-text apply-common-tooltip"]')) {
                                 expireDateContent.innerText = document.querySelector('button[class="btn-fpDXgGC1 button-D4RPB3ZC medium-D4RPB3ZC black-D4RPB3ZC primary-D4RPB3ZC apply-overflow-tooltip apply-overflow-tooltip--check-children-recursively apply-overflow-tooltip--allow-text apply-common-tooltip"] > span[class="content-D4RPB3ZC"]').innerText;
                             } else {
@@ -161,8 +177,8 @@ function getTrueAmount(obj) {
         }
 
         function onclickSubmitButton(event) {
-            let submitButton = document.querySelector('button[data-overflow-tooltip-text*="创建"]');
-            let cancelButton = document.querySelector('button[data-overflow-tooltip-text*="取消"]');
+            let submitButton = document.querySelector('button[data-name="submit"]');
+            let cancelButton = document.querySelector('button[data-name="cancel"]');
             document.querySelector('#alert-dialog-tabs__settings').click();
 
             let symbol = document.querySelector('fieldset[class="container-Fddz5wLp symbolsRow-INZ15hnz"] span[class="label-QIZwlRt3 apply-overflow-tooltip"]').innerText;
@@ -188,7 +204,7 @@ function getTrueAmount(obj) {
             let triggerCondition = new Alert.TriggerCondition(triggerType);
 
             let expireType = window.currentAlertExpireType;
-            let expireDate = !expireType ? '无限制警报' : document.querySelector('button[aria-controls="alert-editor-expiration-popup"] > span[class="content-H6_2ZGVv"]').innerText;
+            let expireDate = !expireType ? infiniteAlertText : document.querySelectorAll('button[aria-controls] > span[class="content-H6_2ZGVv"]').innerText;
             let expire = new Alert.Expire(expireType, expireDate);
 
             let alertName = document.querySelector('#alert-name').value;
@@ -215,7 +231,7 @@ function getTrueAmount(obj) {
             document.querySelector('button[aria-controls="alert-editor-expiration-popup"]').addEventListener('click', changeExpireType);
             let expireDateContent = document.querySelector('button[aria-controls="alert-editor-expiration-popup"] > span[class="content-H6_2ZGVv"]');
             if (!window.currentAlertExpireType) {
-                expireDateContent.innerText = '无限制警报';
+                expireDateContent.innerText = infiniteAlertText;
             } else {
                 expireDateContent.innerText = originExpireDate;
             }
